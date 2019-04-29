@@ -44,34 +44,34 @@ from bokeh.application.handlers.function import FunctionHandler
 # In[3]:
 
 
-def make_document(doc):
+# def make_document(doc):
     
     
     
     
-    def path( file):
-        """
-        Set path settings.
+#     def path( file):
+#         """
+#         Set path settings.
 
-        :param file: file name in format '/dir/name.type'(/dir optional).
+#         :param file: file name in format '/dir/name.type'(/dir optional).
 
-        """
-        if getattr(sys, 'frozen', False):
-            s = os.path.join(os.path.dirname(sys.executable) + file)
-            return s
-        else:
-            s = file
-            return s
+#         """
+#         if getattr(sys, 'frozen', False):
+#             s = os.path.join(os.path.dirname(sys.executable) + file)
+#             return s
+#         else:
+#             s = file
+#             return s
     
 
 
     #матрица
-    matrix = pd.read_csv(path('onoffmatrix_avg.csv'), sep = ';', encoding='cp1251')
+    matrix = pd.read_csv('onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
     matrix = matrix[matrix['hour_on']==7]
     matrix = matrix[['stop_id_from','stop_id_to','movements_norm']]
 
     #остановки-суперсайты
-    stops_supers = pd.read_csv(path('stops_supers.csv'), sep = ';', encoding='cp1251')
+    stops_supers = pd.read_csv('stops_supers.csv', sep = ';', encoding='cp1251')
 
     matrix = pd.merge(matrix, stops_supers, how='inner', left_on = ['stop_id_from'], right_on = ['stop_id'])
     matrix = pd.merge(matrix, stops_supers, how='inner', left_on = ['stop_id_to'], right_on = ['stop_id'])
@@ -79,7 +79,7 @@ def make_document(doc):
                                                                                        'super_site_y':'super_site_to'})
     matrix = matrix.groupby(['super_site_from','super_site_to']).sum().reset_index()
 
-    supers_Moscow = pd.read_csv(path('supers_Mercator.csv'), sep = ';')
+    supers_Moscow = pd.read_csv('supers_Mercator.csv', sep = ';')
     supers_Moscow = supers_Moscow.drop_duplicates()
 
     links = pd.merge(matrix, supers_Moscow, how = 'inner', 
@@ -91,7 +91,7 @@ def make_document(doc):
     links['movements_norm'] = round(links['movements_norm'],0)
 
     #сайты Тушино из
-    supers_T = pd.read_csv(path('supersites_Tushino.csv'), sep = ';')
+    supers_T = pd.read_csv('supersites_Tushino.csv', sep = ';')
 
     links = pd.merge(links, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
     links = links[links['movements_norm']>10]
