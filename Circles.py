@@ -4,7 +4,6 @@
 # In[1]:
 
 
-from bokeh.server.server import Server as server
 from bokeh.io import show, output_notebook
 from bokeh.plotting import figure, show, output_notebook
 from bokeh.tile_providers import CARTODBPOSITRON
@@ -17,8 +16,6 @@ from bokeh.layouts import column, row
 from bokeh.plotting import ColumnDataSource, Figure
 from bokeh.models import Title
 import bokeh.layouts as layout
-from bokeh.application import Application
-from bokeh.application.handlers.function import FunctionHandler
 
 
 # In[2]:
