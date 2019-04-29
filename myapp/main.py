@@ -22,12 +22,12 @@ import bokeh.layouts as layout
 
 
 #матрица
-matrix = pd.read_csv('onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
+matrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
 matrix = matrix[matrix['hour_on']==7]
 matrix = matrix[['stop_id_from','stop_id_to','movements_norm']]
 
 #остановки-суперсайты
-stops_supers = pd.read_csv('stops_supers.csv', sep = ';', encoding='cp1251')
+stops_supers = pd.read_csv('myapp/stops_supers.csv', sep = ';', encoding='cp1251')
 
 matrix = pd.merge(matrix, stops_supers, how='inner', left_on = ['stop_id_from'], right_on = ['stop_id'])
 matrix = pd.merge(matrix, stops_supers, how='inner', left_on = ['stop_id_to'], right_on = ['stop_id'])
@@ -35,7 +35,7 @@ matrix = matrix[['super_site_x','super_site_y','movements_norm']].rename(columns
                                                                                    'super_site_y':'super_site_to'})
 matrix = matrix.groupby(['super_site_from','super_site_to']).sum().reset_index()
 
-supers_Moscow = pd.read_csv('supers_Mercator.csv', sep = ';')
+supers_Moscow = pd.read_csv('myapp/supers_Mercator.csv', sep = ';')
 supers_Moscow = supers_Moscow.drop_duplicates()
 
 links = pd.merge(matrix, supers_Moscow, how = 'inner', 
@@ -47,7 +47,7 @@ links['movements_norm'] = links['movements_norm']/3
 links['movements_norm'] = round(links['movements_norm'],0)
 
 #сайты Тушино из
-supers_T = pd.read_csv('supersites_Tushino.csv', sep = ';')
+supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
 links = pd.merge(links, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
 links = links[links['movements_norm']>10]
