@@ -244,6 +244,10 @@ def callback(attrname, old, new):
             #сумма movements по выделенным индексам
             aaa = dff['size'].sum()
             print("size to: ", aaa)
+            
+            for j in idx_to:
+                new_data['size'] = [y]
+                tds_to.data = new_data
       
 
         source_to.selected.on_change('indices', callback_to)
