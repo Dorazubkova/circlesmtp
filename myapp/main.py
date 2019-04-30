@@ -138,6 +138,8 @@ t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 0.6,
                             line_color='red', line_alpha = 0.8, size=6 , source = source_to)
 
 ds = r.data_source
+tds=t.data_source
+
 
 
 
@@ -186,7 +188,6 @@ def callback(attrname, old, new):
             t = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
                             line_color='red', line_alpha = 0.8, size=[] )
             tds=t.data_source
-            tds.data = new_data
 
             #текст
 
@@ -219,8 +220,10 @@ def callback(attrname, old, new):
             #таблица с выбранными индексами 
             dff = pd.DataFrame(data=tds.data)
             
-            indexdf = pd.DataFrame(inters_idx, columns = ['index'])
-            dff2 = pd.merge(dff, indexdf, how = 'inner', on = ['index'])
+            print("table: ", dff)
+            
+            #indexdf = pd.DataFrame(inters_idx, columns = ['index'])
+            #dff2 = pd.merge(dff, indexdf, how = 'inner', on = ['index'])
             
             
             print("Lenght of selected circles to: ", dff2)
