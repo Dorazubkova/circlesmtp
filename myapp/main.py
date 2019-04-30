@@ -244,6 +244,9 @@ def callback(attrname, old, new):
             #сумма movements по выделенным индексам
             aaa = dff['size'].sum()
             print("size to: ", aaa)
+            count = 0
+            xsum = 0
+            ysum = 0
             
             for y in idx_to:
        
