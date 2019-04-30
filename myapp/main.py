@@ -246,7 +246,7 @@ def callback(attrname, old, new):
             print("size to: ", aaa)
             
             for j in idx_to:
-                new_data['size'] = [y]
+                new_data['size'] = [aaa]
                 tds_to.data = new_data
       
 
