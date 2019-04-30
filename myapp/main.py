@@ -148,8 +148,8 @@ ds = r.data_source
 
 def callback(attrname, old, new):
     idx = source_from.selected.indices
-    print("Indices of selected circles: ", idx)
-    print("Lenght of selected circles: ", len(idx))
+    print("Indices of selected circles from: ", idx)
+    print("Lenght of selected circles from: ", len(idx))
 
 
 
@@ -206,12 +206,12 @@ def callback(attrname, old, new):
             
             
     def callback_to(attrname, old, new):
-      idx_to = source_to.selected.indices
+        idx_to = source_to.selected.indices
 
-      inters_idx = list(set(idx) & set(idx_to))
+        inters_idx = list(set(idx) & set(idx_to))
 
-      print("Indices of selected circles: ", inters_idx)
-      print("Lenght of selected circles: ", len(inters_idx))
+        print("Indices of selected circles to: ", inters_idx)
+        print("Lenght of selected circles to: ", len(inters_idx))
 
     source_to.selected.on_change('indices', callback_to)
 
