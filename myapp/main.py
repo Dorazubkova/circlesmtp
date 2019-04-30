@@ -202,6 +202,18 @@ def callback(attrname, old, new):
 
 
             layout1.children[1] = p_to #обновить график справа
+            
+            
+            
+    def callback_to(attrname, old, new):
+      idx_to = source_to.selected.indices
+
+      inters_idx = list(set(idx) & set(idx_to))
+
+      print("Indices of selected circles: ", inters_idx)
+      print("Lenght of selected circles: ", len(inters_idx))
+
+    source_to.selected.on_change('indices', callback_to)
 
 
 
