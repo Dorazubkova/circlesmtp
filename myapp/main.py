@@ -205,16 +205,31 @@ def callback(attrname, old, new):
             
             
             
-  def callback_to(attrname, old, new):
-    idx_to = source_to.selected.indices
+        def callback_to(attrname, old, new):
+          idx_to = source_to.selected.indices
 
-    inters_idx = list(set(idx) & set(idx_to))
+          inters_idx = list(set(idx) & set(idx_to))
 
-    print("Indices of selected circles to: ", inters_idx)
-    print("Lenght of selected circles to: ", len(inters_idx))
 
-  source_to.selected.on_change('indices', callback_to)
+          print("Indices of selected circles to: ", inters_idx)
+          print("Lenght of selected circles to: ", len(inters_idx))
 
+
+          #таблица с выбранными индексами 
+          dff = pd.DataFrame(data=tds.data)
+
+          indexdf = pd.DataFrame(inters_idx, columns = ['index'])
+          dff2 = pd.merge(dff, indexdf, how = 'inner', on = ['index'])
+
+
+          print("Lenght of selected circles to: ", dff2)
+          #сумма movements по выделенным индексам
+          #aaa = dff.groupby(['X_to','Y_to'])['size'].transform(sum)
+
+
+          #print("size to: ", list(aaa))
+
+        source_to.selected.on_change('indices', callback_to)            
 
 
 
