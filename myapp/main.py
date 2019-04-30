@@ -154,6 +154,8 @@ def callback(attrname, old, new):
 
     #таблица с выбранными индексами 
     df = pd.DataFrame(data=ds.data).iloc[idx]
+    print("table: ", df)
+    
     #сумма movements по выделенным индексам
     aa = df.groupby(['X_to','Y_to'])['size'].transform(sum)
 
