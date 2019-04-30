@@ -246,10 +246,17 @@ def callback(attrname, old, new):
             print("size to: ", aaa)
             
             for y in idx_to:
+       
+                count += 1
+                xsum += tds.data['X_to'][y]
+                ysum += tds.data['Y_to'][y]
+                
+                xcentr = xsum/count
+                ycentr = ysum/count
                 
                 new_data_to = dict()
-                new_data_to['x'] = [tds.data['X_to'][y]]
-                new_data_to['y'] = [tds.data['Y_to'][y]]
+                new_data_to['x'] = [xcentr]
+                new_data_to['y'] = [ycentr]
                 new_data_to['size'] = [aaa]
 
                 t_to2 = p_to.circle(x = [], y = [], fill_color='yellow', fill_alpha = 0.6, 
@@ -259,8 +266,7 @@ def callback(attrname, old, new):
                 
                 layout1.children[1] = p_to #обновить график справа
                 
-                
-      
+   
 
         source_to.selected.on_change('indices', callback_to)
 
