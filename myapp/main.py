@@ -242,7 +242,7 @@ def callback(attrname, old, new):
             print("Length of selected circles to: ", dff)
             
             #сумма movements по выделенным индексам
-            aaa = dff.groupby(['X_to','Y_to'])['size'].transform(sum)
+            aaa = dff['size'].sum()
             print("size to: ", list(aaa))
       
 
