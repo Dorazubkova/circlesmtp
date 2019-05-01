@@ -107,10 +107,16 @@ source_from_labels = ColumnDataSource(data = dict(
 
 hover = HoverTool(tooltips=[('site_id','@label')])
 
-toolList = ['lasso_select', 'tap', 'reset', 'save', 'pan','wheel_zoom', 'box_select']
+lasso_from = LassoSelectTool(select_every_mousemove=True)
+lasso_to = LassoSelectTool(select_every_mousemove=False)
+
+
+toolList_from = [lasso_from, 'tap', 'reset', 'save', 'pan','wheel_zoom']
+toolList_to = [lasso_to, 'tap', 'reset', 'save', 'pan','wheel_zoom']
+
 
 p = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), y_range=(7521739.63348639197647572,  7533621.55124872922897339),
-          x_axis_type="mercator", y_axis_type="mercator", tools=toolList)
+          x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from)
 p.add_tile(CARTODBPOSITRON)
 
 p.add_layout(Title(text='Фильтр корреспонденций "ИЗ"', text_font_size='10pt'), 'above')
@@ -132,7 +138,7 @@ r = p.circle(x = 'X_from',
 
 
 p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), y_range=(7521739.63348639197647572,  7533621.55124872922897339),
-          x_axis_type="mercator", y_axis_type="mercator", tools=toolList)
+          x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
 p_to.add_tile(CARTODBPOSITRON)
 t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 0.6, 
                             line_color='red', line_alpha = 0.8, size=6 , source = source_to)
@@ -183,7 +189,7 @@ def callback(attrname, old, new):
 
     p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
                   y_range=(7521739.63348639197647572,  7533621.55124872922897339),
-                  x_axis_type="mercator", y_axis_type="mercator", tools=toolList)
+                  x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
     p_to.add_tile(CARTODBPOSITRON)
     t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 0.6, 
                             line_color='red', line_alpha = 0.8, size=6 , source = source_to)
@@ -297,9 +303,6 @@ curdoc().add_root(line)
 
 # In[173]:
 
-
-dff = pd.DataFrame(data=tds.data)
-dff['X_from'].sum()/len(dff)
 
 
 # In[ ]:
