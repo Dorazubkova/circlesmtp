@@ -107,7 +107,7 @@ source_from_labels = ColumnDataSource(data = dict(
 
 hover = HoverTool(tooltips=[('site_id','@label')])
 
-toolList = ['lasso_select', 'tap', 'reset', 'save', 'pan','wheel_zoom']
+toolList = ['lasso_select', 'tap', 'reset', 'save', 'pan','wheel_zoom', 'BoxSelectTool']
 
 p = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), y_range=(7521739.63348639197647572,  7533621.55124872922897339),
           x_axis_type="mercator", y_axis_type="mercator", tools=toolList)
