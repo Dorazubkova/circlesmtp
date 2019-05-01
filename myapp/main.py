@@ -11,7 +11,7 @@ import bokeh
 import pandas as pd
 import os
 import sys
-from bokeh.models import ColumnDataSource, HoverTool
+from bokeh.models import ColumnDataSource, HoverTool, LassoSelectTool
 from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
