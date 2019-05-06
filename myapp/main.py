@@ -242,6 +242,7 @@ def callback(attrname, old, new):
             inters_idx = list(set(idx2) & set(idx_to))
 
 
+            print("Indices of selected circles to: ", idx2)
             print("Indices of selected circles to: ", inters_idx)
             print("Length of selected circles to: ", len(inters_idx))
 
