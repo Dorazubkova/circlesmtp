@@ -108,7 +108,7 @@ source_from_labels = ColumnDataSource(data = dict(
 hover = HoverTool(tooltips=[('site_id','@label')])
 
 lasso_from = LassoSelectTool(select_every_mousemove=True)
-lasso_to = LassoSelectTool(select_every_mousemove=False)
+lasso_to = LassoSelectTool(select_every_mousemove=True)
 
 
 toolList_from = [lasso_from, 'tap', 'reset', 'save', 'pan','wheel_zoom']
@@ -246,6 +246,8 @@ def callback(attrname, old, new):
             #таблица с выбранными индексами 
             dff = pd.DataFrame(data=tds.data).loc[inters_idx]
             print("Length of selected circles to: ", dff)
+            
+            
             
             #сумма movements по выделенным индексам
 #             aaa = dff['size'].sum()
