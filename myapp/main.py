@@ -232,62 +232,62 @@ def callback(attrname, old, new):
             layout1.children[1] = p_to #обновить график справа
     
             
-        def callback_to(attrname, old, new):
-          
-          
-
-            idx2 = source_from.selected.indices
-            idx_to = source_to.selected.indices
-
-            inters_idx = list(set(idx2) & set(idx_to))
+            def callback_to(attrname, old, new):
 
 
-            print("Indices of selected circles to: ", idx2)
-            print("Indices of selected circles to: ", inters_idx)
-            print("Length of selected circles to: ", len(inters_idx))
+
+                idx2 = source_from.selected.indices
+                idx_to = source_to.selected.indices
+
+                inters_idx = list(set(idx2) & set(idx_to))
 
 
-            #таблица с выбранными индексами 
-            dff = pd.DataFrame(data=tds.data).loc[inters_idx]
-            print("Length of selected circles to: ", dff)
-            
-            
-            
-            #сумма movements по выделенным индексам
-            aaa = dff['size'].sum()
-            print("size to: ", aaa)
-            
-            xsum = dff['X_to'].sum()
-            ysum = dff['Y_to'].sum()
-            count = len(dff)
-            
-            if count != 0:
-                
+                print("Indices of selected circles to: ", idx2)
+                print("Indices of selected circles to: ", inters_idx)
+                print("Length of selected circles to: ", len(inters_idx))
 
-                xcentr = xsum/count
-                ycentr = ysum/count
-                
-            else:
-                xcentr = 0
-                ycentr = 0
-                   
-                
-            new_data_to = dict()
-            new_data_to['x'] = [xcentr]
-            new_data_to['y'] = [ycentr]
-            new_data_to['size'] = [aaa]
 
-            t_to2 = p_to.circle(x = [], y = [], fill_color='green', fill_alpha = 0.6, 
-                            line_color='red', line_alpha = 0.8, size=[] )
-            tds_to2=t_to2.data_source
-            tds_to2.data = new_data_to
+                #таблица с выбранными индексами 
+                dff = pd.DataFrame(data=tds.data).loc[inters_idx]
+                print("Length of selected circles to: ", dff)
 
-            layout1.children[1] = p_to #обновить график справа
+
+
+                #сумма movements по выделенным индексам
+                aaa = dff['size'].sum()
+                print("size to: ", aaa)
+
+                xsum = dff['X_to'].sum()
+                ysum = dff['Y_to'].sum()
+                count = len(dff)
+
+                if count != 0:
+
+
+                    xcentr = xsum/count
+                    ycentr = ysum/count
+
+                else:
+                    xcentr = 0
+                    ycentr = 0
+
+
+                new_data_to = dict()
+                new_data_to['x'] = [xcentr]
+                new_data_to['y'] = [ycentr]
+                new_data_to['size'] = [aaa]
+
+                t_to2 = p_to.circle(x = [], y = [], fill_color='green', fill_alpha = 0.6, 
+                                line_color='red', line_alpha = 0.8, size=[] )
+                tds_to2=t_to2.data_source
+                tds_to2.data = new_data_to
+
+                layout1.children[1] = p_to #обновить график справа
                 
                 
       
 
-        source_to.selected.on_change('indices', callback_to)
+            source_to.selected.on_change('indices', callback_to)
 
 
 
