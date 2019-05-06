@@ -224,7 +224,7 @@ def callback_to(attrname1, old1, new1):
 
 
     #таблица с выбранными индексами 
-    #dff = pd.DataFrame(data=tds.data).loc[inters_idx]
+    dff = pd.DataFrame(data=tds.data).loc[inters_idx]
     #print("Length of selected circles to: ", dff)
             
             
