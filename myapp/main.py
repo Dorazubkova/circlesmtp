@@ -287,14 +287,14 @@ def callback(attrname, old, new):
                 
       
 
-            source_to.selected.on_change('indices', callback_to)
+            source_to.selected.on_change(callback_to)
 
 
 
 
 
 
-source_from.selected.on_change('indices', callback)
+source_from.selected.on_change(callback)
 
 
 
