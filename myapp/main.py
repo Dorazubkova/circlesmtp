@@ -236,13 +236,13 @@ def callback(attrname, old, new):
 
 
 
-                idx2 = source_from.selected.indices
+                #idx2 = source_from.selected.indices
                 idx_to = source_to.selected.indices
 
-                inters_idx = list(set(idx2) & set(idx_to))
+                inters_idx = list(set(idx) & set(idx_to))
 
 
-                print("Indices of selected circles to: ", idx2)
+                print("Indices of selected circles to: ", list(idx))
                 print("Indices of selected circles to: ", inters_idx)
                 print("Length of selected circles to: ", len(inters_idx))
 
