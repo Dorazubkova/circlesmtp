@@ -232,6 +232,18 @@ def callback_to(attrname1, old1, new1):
     #сумма movements по выделенным индексам
     aaa = dff['size'].sum()
     print("size to: ", aaa)
+    
+    
+    
+    
+    p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
+                  y_range=(7521739.63348639197647572,  7533621.55124872922897339),
+                  x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
+    p_to.add_tile(CARTODBPOSITRON)
+    t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 0.6, 
+                            line_color='red', line_alpha = 0.8, size=6 , source = source_to)
+    
+    
 
     xsum = dff['X_to'].sum()
     ysum = dff['Y_to'].sum()
