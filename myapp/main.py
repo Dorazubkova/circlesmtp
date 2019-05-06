@@ -245,38 +245,38 @@ def callback(attrname, old, new):
 
             #таблица с выбранными индексами 
             dff = pd.DataFrame(data=tds.data).loc[inters_idx]
-            #print("Length of selected circles to: ", dff)
+            print("Length of selected circles to: ", dff)
             
             #сумма movements по выделенным индексам
-            aaa = dff['size'].sum()
-            print("size to: ", aaa)
+#             aaa = dff['size'].sum()
+#             print("size to: ", aaa)
             
-            xsum = dff['X_to'].sum()
-            ysum = dff['Y_to'].sum()
-            count = len(dff)
+#             xsum = dff['X_to'].sum()
+#             ysum = dff['Y_to'].sum()
+#             count = len(dff)
             
-            if count != 0:
+#             if count != 0:
                 
 
-                xcentr = xsum/count
-                ycentr = ysum/count
+#                 xcentr = xsum/count
+#                 ycentr = ysum/count
                 
-            else:
-                xcentr = 0
-                ycentr = 0
+#             else:
+#                 xcentr = 0
+#                 ycentr = 0
                    
                 
-            new_data_to = dict()
-            new_data_to['x'] = [xcentr]
-            new_data_to['y'] = [ycentr]
-            new_data_to['size'] = [aaa]
+#             new_data_to = dict()
+#             new_data_to['x'] = [xcentr]
+#             new_data_to['y'] = [ycentr]
+#             new_data_to['size'] = [aaa]
 
-            t_to2 = p_to.circle(x = [], y = [], fill_color='green', fill_alpha = 0.6, 
-                            line_color='red', line_alpha = 0.8, size=[] )
-            tds_to2=t_to2.data_source
-            tds_to2.data = new_data_to
+#             t_to2 = p_to.circle(x = [], y = [], fill_color='green', fill_alpha = 0.6, 
+#                             line_color='red', line_alpha = 0.8, size=[] )
+#             tds_to2=t_to2.data_source
+#             tds_to2.data = new_data_to
 
-            layout1.children[1] = p_to #обновить график справа
+#             layout1.children[1] = p_to #обновить график справа
                 
                 
       
