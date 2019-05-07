@@ -261,8 +261,8 @@ def callback_to(attrname, old, new):
     print("size to: ", aaa)
     
     #сайты из
-    sitesfrom = dff['sitesfrom']
-    sitesto = dff['sitesto']
+    sitesfrom = dff['sitesfrom'].drop_duplicates()
+    sitesto = dff['sitesto'].drop_duplicates()
     
     stats.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а)"
 
