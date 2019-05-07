@@ -34,9 +34,9 @@ matrix = pd.merge(matrix, stops_supers, how='inner', left_on = ['stop_id_from'],
 matrix = pd.merge(matrix, stops_supers, how='inner', left_on = ['stop_id_to'], right_on = ['stop_id'])
 matrix = matrix[['super_site_x','super_site_y','movements_norm']].rename(columns = {'super_site_x':'super_site_from',
                                                                                    'super_site_y':'super_site_to'})
-matrix = matrix.groupby(['myapp/super_site_from','super_site_to']).sum().reset_index()
+matrix = matrix.groupby(['super_site_from','super_site_to']).sum().reset_index()
 
-supers_Moscow = pd.read_csv('supers_Mercator.csv', sep = ';')
+supers_Moscow = pd.read_csv('myapp/supers_Mercator.csv', sep = ';')
 supers_Moscow = supers_Moscow.drop_duplicates()
 
 links = pd.merge(matrix, supers_Moscow, how = 'inner', 
