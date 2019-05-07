@@ -540,7 +540,7 @@ def callback_to2(attrname, old, new):
     sitesfrom = dff['sitesfrom'].drop_duplicates()
     sitesto = dff['sitesto'].drop_duplicates()
 
-    stats2.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а) в час"
+    stats2.text = "В сайты " + str(list(sitesto)) + " из сайтов " + str(list(sitesfrom)) + " едет " + str(aaa) + " человек(а) в час"
 
     
 source_from2.selected.on_change('indices', callback_to2)
