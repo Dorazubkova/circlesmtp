@@ -62,11 +62,11 @@ onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
 # In[ ]:
 
 
-odmatrix = pd.read_csv('odmatrix_avg.csv', sep = ';', encoding='cp1251')
+odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
 odmatrix = odmatrix[['site_id_from','site_id_to','movements_norm', 'hour_start']]
 
 #сайты-суперсайты
-sited_supers = pd.read_csv('sites_supers.csv', sep = ';', encoding='cp1251')
+sited_supers = pd.read_csv('myapp/sites_supers.csv', sep = ';', encoding='cp1251')
 
 odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_from'], right_on = ['site_id'])
 odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_to'], right_on = ['site_id'])
