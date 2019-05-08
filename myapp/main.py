@@ -294,20 +294,6 @@ def update(attrname, old, new):
 select.on_change('value', update)
 
 
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[126]:
-
 
 def callback(attrname, old, new):
 
@@ -417,7 +403,7 @@ p2 = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), y_r
               x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from2)
 p2.add_tile(CARTODBPOSITRON)
 
-p2.add_layout(Title(text='Фильтр корреспонденций "В"', text_font_size='10pt'), 'above')
+p2.add_layout(Title(text='Фильтр корреспонденций "В"', text_font_size='10pt', text_color = 'purple'), 'above')
 
 r2 = p2.circle(x = 'X_to',
          y = 'Y_to',
