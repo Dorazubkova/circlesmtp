@@ -95,25 +95,7 @@ odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
 odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 
 
-# In[ ]:
 
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
-
-
-# In[122]:
 
 
 source_from = ColumnDataSource(data = dict(
@@ -167,13 +149,7 @@ source_to2 = ColumnDataSource(data = dict(
 # ))
 
 
-# In[ ]:
 
-
-
-
-
-# In[123]:
 
 
 lasso_from = LassoSelectTool(select_every_mousemove=True)
@@ -345,6 +321,8 @@ def callback(attrname, old, new):
     #сумма movements по выделенным индексам
     aa = df.groupby(['X_to','Y_to'])['size'].transform(sum)
     aat = df.groupby(['X_to','Y_to'])['text'].transform(sum)
+    df['size_sum'] = aa
+    df['text_sum'] = aat
 
 
     p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
@@ -355,6 +333,8 @@ def callback(attrname, old, new):
                             line_color='red', line_alpha = 0.8, size=6 , source = source_to,
                    nonselection_fill_alpha=1,
                 nonselection_fill_color='pink')
+    
+    test = df.drop_duplicates(['X_to','Y_to'])
 
 
     if not idx: #если пустое выделение
@@ -363,13 +343,12 @@ def callback(attrname, old, new):
 
     else: #если не пустое выделение
 
-        for x in idx: #для каждого выделенного индекса рисуем site_to и его параметры
+        for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
 
             new_data = dict()
-            new_data['x'] = [ds.data['X_to'][x]]
-            new_data['y'] = [ds.data['Y_to'][x]]
-            new_data['size'] = [aa[x]]
-            new_data['index'] = [x]
+            new_data['x'] = [list(test['X_to'])[x]]
+            new_data['y'] = [list(test['Y_to'])[x]]
+            new_data['size'] = [list(test['size_sum'])[x]]
 
 
             t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
@@ -380,9 +359,9 @@ def callback(attrname, old, new):
             #текст
 
             new_data_text = dict()
-            new_data_text['x'] = [ds.data['X_to'][x]]
-            new_data_text['y'] = [ds.data['Y_to'][x]]
-            new_data_text['text'] = [aat[x]]
+            new_data_text['x'] = [list(test['X_to'])[x]]
+            new_data_text['y'] = [list(test['Y_to'])[x]]
+            new_data_text['text'] = [list(test['text_sum'])[x]]
 
 
             l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
