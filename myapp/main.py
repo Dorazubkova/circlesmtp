@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[117]:
+# In[237]:
 
 
+from bokeh.server.server import Server as server
 from bokeh.io import show, output_notebook
 from bokeh.plotting import figure, show, output_notebook
 from bokeh.tile_providers import CARTODBPOSITRON
@@ -16,11 +17,15 @@ from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.plotting import ColumnDataSource, Figure
-from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown
+from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup
 import bokeh.layouts as layout
+from bokeh.application import Application
+from bokeh.application.handlers.function import FunctionHandler
+output_notebook()
 
 
-# In[118]:
+# In[238]:
+
 
 
 onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -51,16 +56,11 @@ supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
 onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>30]
 onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/3, 0)
-
-
-# In[119]:
-
-
 onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
 onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
 
 
-# In[120]:
+# In[239]:
 
 
 odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -86,16 +86,11 @@ odmatrix['movements_norm'] = round(odmatrix['movements_norm'],0)
 odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
 odmatrix = odmatrix[odmatrix['movements_norm']>30]
 odmatrix['movesize'] = round(odmatrix['movements_norm']/3, 0)
-
-
-# In[121]:
-
-
 odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
 odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 
 
-
+# In[240]:
 
 
 source_from = ColumnDataSource(data = dict(
@@ -142,14 +137,7 @@ source_to2 = ColumnDataSource(data = dict(
 ))
 
 
-# source_from_labels = ColumnDataSource(data = dict(
-#                         X_from=list(links[['X_from', 'Y_from','super_site_from']].drop_duplicates()['X_from'].values), 
-#                         Y_from=list(links[['X_from', 'Y_from','super_site_from']].drop_duplicates()['Y_from'].values),
-#                         label=list(links[['X_from', 'Y_from','super_site_from']].drop_duplicates()['super_site_from'].values)
-# ))
-
-
-
+# In[241]:
 
 
 lasso_from = LassoSelectTool(select_every_mousemove=True)
@@ -208,195 +196,6 @@ ds = r.data_source
 tds = t.data_source
 
 
-# In[124]:
-
-
-#widgets
-stats = Paragraph(text='', width=350)
-stats2 = Paragraph(text='', width=350)
-menu = [('onoffmatrix_7', 'onoffmatrix_7'), ('onoffmatrix_8', 'onoffmatrix_8'), ('odmatrix_7', 'odmatrix_7'),
-       ('odmatrix_8', 'odmatrix_8')]
-select = Dropdown(label="Выберите матрицу: ", menu = menu)
-
-
-# In[ ]:
-
-
-
-
-
-# In[125]:
-
-
-def update(attrname, old, new):
-    sl = select.value
-    print(sl)
-    df = pd.DataFrame(data = eval(sl))
-    print(df.columns.values)
-    
-    
-    #1
-    source_from_sl = ColumnDataSource(data = dict(
-                        X_from=list(df['X_from'].values), 
-                        Y_from=list(df['Y_from'].values),
-                        size=list(df['movesize'].values),
-                        X_to=list(df['X_to'].values), 
-                        Y_to=list(df['Y_to'].values),
-                        sitesfrom=list(df['super_site_from'].values),
-                        sitesto=list(df['super_site_to'].values),
-        text=list(df['movements_norm'].values),
-))
-    source_from.data = source_from_sl.data
-    
-    #2
-    source_to_sl = ColumnDataSource(data = dict(
-                        X_from=list(df['X_from'].values), 
-                        Y_from=list(df['Y_from'].values),
-                        size=list(df['movesize'].values),
-                        X_to=list(df['X_to'].values), 
-                        Y_to=list(df['Y_to'].values),
-                        sitesfrom=list(df['super_site_from'].values),
-                        sitesto=list(df['super_site_to'].values),
-        text=list(df['movements_norm'].values),
-))
-    source_to.data = source_to_sl.data
-    
-    #3
-    source_from_sl2 = ColumnDataSource(data = dict(
-                        X_from=list(df['X_from'].values), 
-                        Y_from=list(df['Y_from'].values),
-                        size=list(df['movesize'].values),
-                        X_to=list(df['X_to'].values), 
-                        Y_to=list(df['Y_to'].values),
-                        sitesfrom=list(df['super_site_from'].values),
-                        sitesto=list(df['super_site_to'].values),
-        text=list(df['movements_norm'].values),
-))
-    source_from2.data = source_from_sl2.data
-    
-    #4
-    source_to_sl2 = ColumnDataSource(data = dict(
-                        X_from=list(df['X_from'].values), 
-                        Y_from=list(df['Y_from'].values),
-                        size=list(df['movesize'].values),
-                        X_to=list(df['X_to'].values), 
-                        Y_to=list(df['Y_to'].values),
-                        sitesfrom=list(df['super_site_from'].values),
-                        sitesto=list(df['super_site_to'].values),
-        text=list(df['movements_norm'].values),
-))
-    source_to2.data = source_to_sl2.data
-    
-    
-    Time_Title.text = "Матрица: " + sl
-    
-    
-select.on_change('value', update)
-
-
-
-def callback(attrname, old, new):
-
-    idx = source_from.selected.indices
-
-    print("Indices of selected circles from: ", idx)
-    print("Lenght of selected circles from: ", len(idx))
-
-    #таблица с выбранными индексами 
-    df = pd.DataFrame(data=ds.data).iloc[idx]
-    #сумма movements по выделенным индексам
-    aa = df.groupby(['X_to','Y_to'])['size'].transform(sum)
-    aat = df.groupby(['X_to','Y_to'])['text'].transform(sum)
-    df['size_sum'] = aa
-    df['text_sum'] = aat
-
-
-    p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
-                  y_range=(7521739.63348639197647572,  7533621.55124872922897339),
-                  x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
-    p_to.add_tile(CARTODBPOSITRON)
-    t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 0.6, 
-                            line_color='red', line_alpha = 0.8, size=6 , source = source_to,
-                   nonselection_fill_alpha=1,
-                nonselection_fill_color='pink')
-    
-    test = df.drop_duplicates(['X_to','Y_to'])
-
-
-    if not idx: #если пустое выделение
-
-        layout1.children[1] = p_to #обновить график справа
-
-    else: #если не пустое выделение
-
-        for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
-
-            new_data = dict()
-            new_data['x'] = [list(test['X_to'])[x]]
-            new_data['y'] = [list(test['Y_to'])[x]]
-            new_data['size'] = [list(test['size_sum'])[x]]
-
-
-            t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-                            line_color='red', line_alpha = 0.8, size=[] )
-            tds_to=t_to.data_source
-            tds_to.data = new_data
-
-            #текст
-
-            new_data_text = dict()
-            new_data_text['x'] = [list(test['X_to'])[x]]
-            new_data_text['y'] = [list(test['Y_to'])[x]]
-            new_data_text['text'] = [list(test['text_sum'])[x]]
-
-
-            l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-                         text_font_style = 'bold')
-            lds=l.data_source
-            lds.data = new_data_text
-
-
-            layout1.children[1] = p_to #обновить график справа
-            
-source_from.selected.on_change('indices', callback)
-    
-            
-def callback_to(attrname, old, new):
-
-    idx2 = source_from.selected.indices
-    idx_to = source_to.selected.indices
-
-    inters_idx = list(set(idx2) & set(idx_to))
-    
-    print("Length of selected circles to: ", idx2)
-    print("Length of selected circles to: ", inters_idx)
-
-
-    #таблица с выбранными индексами 
-    dff = pd.DataFrame(data=tds.data).loc[inters_idx]
-    print("Length of selected circles to: ", dff)
-
-    #сумма movements по выделенным индексам
-    aaa = dff['text'].sum()
-    print("size to: ", aaa)
-    
-    #сайты из
-    sitesfrom = dff['sitesfrom'].drop_duplicates()
-    sitesto = dff['sitesto'].drop_duplicates()
-
-    stats.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а) в час"
-
-    
-source_to.selected.on_change('indices', callback_to)
-
-
-# In[ ]:
-
-
-
-
-
-# In[127]:
 
 
 p2 = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), y_range=(7521739.63348639197647572,  7533621.55124872922897339),
@@ -432,96 +231,380 @@ t2 = p_from.circle(x = 'X_from', y = 'Y_from', fill_color='red', fill_alpha = 0.
 ds2 = r2.data_source
 tds2 = t2.data_source
 
+# In[124]:
 
-# In[128]:
+
+#widgets
+stats = Paragraph(text='', width=350)
+stats2 = Paragraph(text='', width=350)
+menu = [('onoffmatrix_7', 'onoffmatrix_7'), ('onoffmatrix_8', 'onoffmatrix_8'), ('odmatrix_7', 'odmatrix_7'),
+       ('odmatrix_8', 'odmatrix_8')]
+select = Dropdown(label="Выберите матрицу: ", menu = menu)
+
+button1 = RadioButtonGroup(labels=['Нарисовать кружочки и посмотреть корреспонденции','Посмотреть корреспонденции'])
 
 
-def callback2(attrname, old, new):
-    idx = source_to2.selected.indices
-    print("Indices of selected circles: ", idx)
-    print("Lenght of selected circles: ", len(idx))
-
-    #таблица с выбранными индексами 
-    df = pd.DataFrame(data=ds2.data).iloc[idx]
-    #сумма movements по выделенным индексам
-    aa = df.groupby(['X_from','Y_from'])['size'].transform(sum)
-    aat = df.groupby(['X_from','Y_from'])['text'].transform(sum)
+def button(attrname, old, new):
     
-    df['size_sum'] = aa
-    df['text_sum'] = aat
+    if button1.active == 0:
 
-    p_from = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
-                  y_range=(7521739.63348639197647572,  7533621.55124872922897339),
-                  x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
-    p_from.add_tile(CARTODBPOSITRON)
-    t2 = p_from.circle(x = 'X_from', y = 'Y_from', fill_color='red', fill_alpha = 0.6, 
-                            line_color='red', line_alpha = 0.8, size=6 , source = source_from2,
-                      nonselection_fill_alpha=1,
-                nonselection_fill_color='pink')
-    
-    test = df.drop_duplicates(['X_from','Y_from'])
-
-    if not idx: #если пустое выделение
-
-        layout2.children[1] = p_from #обновить график справа
-
-    else: #если не пустое выделение
-
-        for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
-
-            new_data = dict()
-            new_data['x'] = [list(test['X_from'])[x]]
-            new_data['y'] = [list(test['Y_from'])[x]]
-            new_data['size'] = [list(test['size_sum'])[x]]
-
-            t2 = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-                            line_color='red', line_alpha = 0.8, size=[] )
-            tds2=t2.data_source
-            tds2.data = new_data
-
-            #текст
-
-            new_data_text = dict()
-            new_data_text['x'] = [list(test['X_from'])[x]]
-            new_data_text['y'] = [list(test['Y_from'])[x]]
-            new_data_text['text'] = [list(test['text_sum'])[x]]
-
-            l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-                         text_font_style = 'bold')
-            lds2=l2.data_source
-            lds2.data = new_data_text
-
-            layout2.children[1] = p_from #обновить график справа
+        def update(attrname, old, new):
+            sl = select.value
+            print(sl)
+            df = pd.DataFrame(data = eval(sl))
+            print(df.columns.values)
 
 
-source_to2.selected.on_change('indices', callback2)
+            #1
+            source_from_sl = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values),
+        ))
+            source_from.data = source_from_sl.data
 
-def callback_to2(attrname, old, new):
+            #2
+            source_to_sl = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values),
+        ))
+            source_to.data = source_to_sl.data
 
-    idx2 = source_to2.selected.indices
-    idx_to = source_from2.selected.indices
+            #3
+            source_from_sl2 = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values),
+        ))
+            source_from2.data = source_from_sl2.data
 
-    inters_idx = list(set(idx2) & set(idx_to))
-    
-    print("Length of selected circles to: ", idx2)
-    print("Length of selected circles to: ", inters_idx)
+            #4
+            source_to_sl2 = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values),
+        ))
+            source_to2.data = source_to_sl2.data
 
-    #таблица с выбранными индексами 
-    dff = pd.DataFrame(data=tds2.data).loc[inters_idx]
-    print("Length of selected circles to: ", dff)
 
-    #сумма movements по выделенным индексам
-    aaa = dff['text'].sum()
-    print("size to: ", aaa)
-    
-    #сайты из
-    sitesfrom = dff['sitesfrom'].drop_duplicates()
-    sitesto = dff['sitesto'].drop_duplicates()
+            Time_Title.text = "Матрица: " + sl
 
-    stats2.text = "В сайты " + str(list(sitesto)) + " из сайтов " + str(list(sitesfrom)) + " едет " + str(aaa) + " человек(а) в час"
 
-    
-source_from2.selected.on_change('indices', callback_to2)
+        select.on_change('value', update)
+
+
+
+        def callback(attrname, old, new):
+
+            idx = source_from.selected.indices
+
+            print("Indices of selected circles from: ", idx)
+            print("Lenght of selected circles from: ", len(idx))
+
+            #таблица с выбранными индексами 
+            df = pd.DataFrame(data=ds.data).iloc[idx]
+            #сумма movements по выделенным индексам
+            aa = df.groupby(['X_to','Y_to'])['size'].transform(sum)
+            aat = df.groupby(['X_to','Y_to'])['text'].transform(sum)
+            df['size_sum'] = aa
+            df['text_sum'] = aat
+
+
+            p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
+                          y_range=(7521739.63348639197647572,  7533621.55124872922897339),
+                          x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
+            p_to.add_tile(CARTODBPOSITRON)
+            t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 0.6, 
+                                    line_color='red', line_alpha = 0.8, size=6 , source = source_to,
+                           nonselection_fill_alpha=1,
+                        nonselection_fill_color='pink')
+
+            test = df.drop_duplicates(['X_to','Y_to'])
+
+
+            if not idx: #если пустое выделение
+
+                layout1.children[1] = p_to #обновить график справа
+
+            else: #если не пустое выделение
+
+                for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
+
+                    new_data = dict()
+                    new_data['x'] = [list(test['X_to'])[x]]
+                    new_data['y'] = [list(test['Y_to'])[x]]
+                    new_data['size'] = [list(test['size_sum'])[x]]
+
+
+                    t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
+                                    line_color='red', line_alpha = 0.8, size=[] )
+                    tds_to=t_to.data_source
+                    tds_to.data = new_data
+
+                    #текст
+
+                    new_data_text = dict()
+                    new_data_text['x'] = [list(test['X_to'])[x]]
+                    new_data_text['y'] = [list(test['Y_to'])[x]]
+                    new_data_text['text'] = [list(test['text_sum'])[x]]
+
+
+                    l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+                                 text_font_style = 'bold')
+                    lds=l.data_source
+                    lds.data = new_data_text
+
+
+                    layout1.children[1] = p_to #обновить график справа
+
+        source_from.selected.on_change('indices', callback)
+
+
+        def callback_to(attrname, old, new):
+
+            idx2 = source_from.selected.indices
+            idx_to = source_to.selected.indices
+
+            inters_idx = list(set(idx2) & set(idx_to))
+
+            print("Length of selected circles to: ", idx2)
+            print("Length of selected circles to: ", inters_idx)
+
+
+            #таблица с выбранными индексами 
+            dff = pd.DataFrame(data=tds.data).loc[inters_idx]
+            print("Length of selected circles to: ", dff)
+
+            #сумма movements по выделенным индексам
+            aaa = dff['text'].sum()
+            print("size to: ", aaa)
+
+            #сайты из
+            sitesfrom = dff['sitesfrom'].drop_duplicates()
+            sitesto = dff['sitesto'].drop_duplicates()
+
+            stats.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а) в час"
+
+
+        source_to.selected.on_change('indices', callback_to)
+
+
+
+
+        def callback2(attrname, old, new):
+            idx = source_to2.selected.indices
+            print("Indices of selected circles: ", idx)
+            print("Lenght of selected circles: ", len(idx))
+
+            #таблица с выбранными индексами 
+            df = pd.DataFrame(data=ds2.data).iloc[idx]
+            #сумма movements по выделенным индексам
+            aa = df.groupby(['X_from','Y_from'])['size'].transform(sum)
+            aat = df.groupby(['X_from','Y_from'])['text'].transform(sum)
+
+            df['size_sum'] = aa
+            df['text_sum'] = aat
+
+            print(df)
+
+            p_from = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
+                          y_range=(7521739.63348639197647572,  7533621.55124872922897339),
+                          x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
+            p_from.add_tile(CARTODBPOSITRON)
+            t2 = p_from.circle(x = 'X_from', y = 'Y_from', fill_color='red', fill_alpha = 0.6, 
+                                    line_color='red', line_alpha = 0.8, size=6 , source = source_from2,
+                              nonselection_fill_alpha=1,
+                        nonselection_fill_color='pink')
+
+            test = df.drop_duplicates(['X_from','Y_from'])
+
+            if not idx: #если пустое выделение
+
+                layout2.children[1] = p_from #обновить график справа
+
+            else: #если не пустое выделение
+
+                for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
+
+                    new_data = dict()
+                    new_data['x'] = [list(test['X_from'])[x]]
+                    new_data['y'] = [list(test['Y_from'])[x]]
+                    new_data['size'] = [list(test['size_sum'])[x]]
+
+                    t2 = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
+                                    line_color='red', line_alpha = 0.8, size=[] )
+                    tds2=t2.data_source
+                    tds2.data = new_data
+
+                    #текст
+
+                    new_data_text = dict()
+                    new_data_text['x'] = [list(test['X_from'])[x]]
+                    new_data_text['y'] = [list(test['Y_from'])[x]]
+                    new_data_text['text'] = [list(test['text_sum'])[x]]
+
+                    l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+                                 text_font_style = 'bold')
+                    lds2=l2.data_source
+                    lds2.data = new_data_text
+
+                    layout2.children[1] = p_from #обновить график справа
+
+
+        source_to2.selected.on_change('indices', callback2)
+
+        def callback_to2(attrname, old, new):
+
+            idx2 = source_to2.selected.indices
+            idx_to = source_from2.selected.indices
+
+            inters_idx = list(set(idx2) & set(idx_to))
+
+            print("Length of selected circles to: ", idx2)
+            print("Length of selected circles to: ", inters_idx)
+
+            #таблица с выбранными индексами 
+            dff = pd.DataFrame(data=tds2.data).loc[inters_idx]
+            print("Length of selected circles to: ", dff)
+
+            #сумма movements по выделенным индексам
+            aaa = dff['text'].sum()
+            print("size to: ", aaa)
+
+            #сайты из
+            sitesfrom = dff['sitesfrom'].drop_duplicates()
+            sitesto = dff['sitesto'].drop_duplicates()
+
+            stats2.text = "В сайты " + str(list(sitesto)) + " из сайтов " + str(list(sitesfrom)) + " едет " + str(aaa) + " человек(а) в час"
+
+
+        source_from2.selected.on_change('indices', callback_to2)
+        
+        
+        
+    else:
+
+        def update(attrname, old, new):
+            sl = select.value
+            print(sl)
+            df = pd.DataFrame(data = eval(sl))
+            print(df.columns.values)
+
+
+            #1
+            source_from_sl = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values)))
+
+            source_from.data = source_from_sl.data
+
+            #2
+            source_to_sl = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values)))
+
+            source_to.data = source_to_sl.data
+
+            #3
+            source_from_sl2 = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values)))
+
+            source_from2.data = source_from_sl2.data
+
+            #4
+            source_to_sl2 = ColumnDataSource(data = dict(
+                                X_from=list(df['X_from'].values), 
+                                Y_from=list(df['Y_from'].values),
+                                size=list(df['movesize'].values),
+                                X_to=list(df['X_to'].values), 
+                                Y_to=list(df['Y_to'].values),
+                                sitesfrom=list(df['super_site_from'].values),
+                                sitesto=list(df['super_site_to'].values),
+                text=list(df['movements_norm'].values)))
+
+            source_to2.data = source_to_sl2.data
+
+
+            Time_Title.text = "Матрица: " + sl
+
+
+        select.on_change('value', update)
+
+
+
+        def callback_to(attrname, old, new):
+
+            idx2 = source_from.selected.indices
+            idx_to = source_to.selected.indices
+
+            inters_idx = list(set(idx2) & set(idx_to))
+
+            print("Length of selected circles to: ", idx2)
+            print("Length of selected circles to: ", inters_idx)
+
+
+            #таблица с выбранными индексами 
+            dff = pd.DataFrame(data=tds.data).loc[inters_idx]
+            print("Length of selected circles to: ", dff)
+
+            #сумма movements по выделенным индексам
+            aaa = dff['text'].sum()
+            print("size to: ", aaa)
+
+            #сайты из
+            sitesfrom = dff['sitesfrom'].drop_duplicates()
+            sitesto = dff['sitesto'].drop_duplicates()
+
+            stats.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а) в час"
+
+
+        source_to.selected.on_change('indices', callback_to)
+
+
+            
+        
+button1.on_change('active', button)
+
 
 
 # In[ ]:
@@ -536,17 +619,56 @@ source_from2.selected.on_change('indices', callback_to2)
 
 
 
-# In[129]:
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[ ]:
+
+
+
+
+
+# In[242]:
 
 
 layout1 = layout.row(p,p_to,stats,select)
-layout2 = layout.row(p2, p_from,stats2)
+layout2 = layout.row(p2, p_from,stats2, button1)
 
 # Create Tabs
 box = layout.column(layout1, layout2)
 
 
 curdoc().add_root(box)
+
+
+# In[243]:
+
+
+# apps = {'/': Application(FunctionHandler(make_document))}
+
+# server = server(apps, port=5001)
+# server.start()
+
+
+# if __name__ == '__main__':
+#     print('Opening Bokeh application on http://localhost:5006/')
+
+# server.io_loop.add_callback(server.show, "/")
+
+
+# In[ ]:
+
+
+
 
 
 # In[ ]:
