@@ -244,7 +244,7 @@ menu = [('onoffmatrix_7', 'onoffmatrix_7'), ('onoffmatrix_8', 'onoffmatrix_8'), 
        ('odmatrix_8', 'odmatrix_8')]
 select = Dropdown(label="Выберите матрицу: ", menu = menu)
 
-button1 = RadioButtonGroup(labels=['Нарисовать кружочки и посмотреть корреспонденции','Посмотреть корреспонденции'])
+button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'])
 
 
 def update(attrname, old, new):
