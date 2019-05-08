@@ -49,7 +49,8 @@ onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],0)
 supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
 onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>50]
+onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>30]
+onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/3, 0)
 
 
 # In[119]:
@@ -83,7 +84,8 @@ odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from'
 odmatrix['movements_norm'] = round(odmatrix['movements_norm'],0)
 
 odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-odmatrix = odmatrix[odmatrix['movements_norm']>50]
+odmatrix = odmatrix[odmatrix['movements_norm']>30]
+odmatrix['movesize'] = round(odmatrix['movements_norm']/3, 0)
 
 
 # In[121]:
@@ -234,8 +236,8 @@ tds = t.data_source
 
 
 #widgets
-stats = Paragraph(text='', width=500)
-stats2 = Paragraph(text='', width=500)
+stats = Paragraph(text='', width=350)
+stats2 = Paragraph(text='', width=350)
 menu = [('onoffmatrix_7', 'onoffmatrix_7'), ('onoffmatrix_8', 'onoffmatrix_8'), ('odmatrix_7', 'odmatrix_7'),
        ('odmatrix_8', 'odmatrix_8')]
 select = Dropdown(label="Выберите матрицу: ", menu = menu)
@@ -261,11 +263,12 @@ def update(attrname, old, new):
     source_from_sl = ColumnDataSource(data = dict(
                         X_from=list(df['X_from'].values), 
                         Y_from=list(df['Y_from'].values),
-                        size=list(df['movements_norm'].values),
+                        size=list(df['movesize'].values),
                         X_to=list(df['X_to'].values), 
                         Y_to=list(df['Y_to'].values),
                         sitesfrom=list(df['super_site_from'].values),
                         sitesto=list(df['super_site_to'].values),
+        text=list(df['movements_norm'].values),
 ))
     source_from.data = source_from_sl.data
     
@@ -273,11 +276,12 @@ def update(attrname, old, new):
     source_to_sl = ColumnDataSource(data = dict(
                         X_from=list(df['X_from'].values), 
                         Y_from=list(df['Y_from'].values),
-                        size=list(df['movements_norm'].values),
+                        size=list(df['movesize'].values),
                         X_to=list(df['X_to'].values), 
                         Y_to=list(df['Y_to'].values),
                         sitesfrom=list(df['super_site_from'].values),
                         sitesto=list(df['super_site_to'].values),
+        text=list(df['movements_norm'].values),
 ))
     source_to.data = source_to_sl.data
     
@@ -285,11 +289,12 @@ def update(attrname, old, new):
     source_from_sl2 = ColumnDataSource(data = dict(
                         X_from=list(df['X_from'].values), 
                         Y_from=list(df['Y_from'].values),
-                        size=list(df['movements_norm'].values),
+                        size=list(df['movesize'].values),
                         X_to=list(df['X_to'].values), 
                         Y_to=list(df['Y_to'].values),
                         sitesfrom=list(df['super_site_from'].values),
                         sitesto=list(df['super_site_to'].values),
+        text=list(df['movements_norm'].values),
 ))
     source_from2.data = source_from_sl2.data
     
@@ -297,11 +302,12 @@ def update(attrname, old, new):
     source_to_sl2 = ColumnDataSource(data = dict(
                         X_from=list(df['X_from'].values), 
                         Y_from=list(df['Y_from'].values),
-                        size=list(df['movements_norm'].values),
+                        size=list(df['movesize'].values),
                         X_to=list(df['X_to'].values), 
                         Y_to=list(df['Y_to'].values),
                         sitesfrom=list(df['super_site_from'].values),
                         sitesto=list(df['super_site_to'].values),
+        text=list(df['movements_norm'].values),
 ))
     source_to2.data = source_to_sl2.data
     
@@ -338,6 +344,7 @@ def callback(attrname, old, new):
     df = pd.DataFrame(data=ds.data).iloc[idx]
     #сумма movements по выделенным индексам
     aa = df.groupby(['X_to','Y_to'])['size'].transform(sum)
+    aat = df.groupby(['X_to','Y_to'])['text'].transform(sum)
 
 
     p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
@@ -375,7 +382,7 @@ def callback(attrname, old, new):
             new_data_text = dict()
             new_data_text['x'] = [ds.data['X_to'][x]]
             new_data_text['y'] = [ds.data['Y_to'][x]]
-            new_data_text['text'] = [aa[x]]
+            new_data_text['text'] = [aat[x]]
 
 
             l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
@@ -405,7 +412,7 @@ def callback_to(attrname, old, new):
     print("Length of selected circles to: ", dff)
 
     #сумма movements по выделенным индексам
-    aaa = dff['size'].sum()
+    aaa = dff['text'].sum()
     print("size to: ", aaa)
     
     #сайты из
@@ -473,6 +480,7 @@ def callback2(attrname, old, new):
     df = pd.DataFrame(data=ds2.data).iloc[idx]
     #сумма movements по выделенным индексам
     aa = df.groupby(['X_from','Y_from'])['size'].transform(sum)
+    aat = df.groupby(['X_from','Y_from'])['text'].transform(sum)
 
     p_from = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
                   y_range=(7521739.63348639197647572,  7533621.55124872922897339),
@@ -506,7 +514,7 @@ def callback2(attrname, old, new):
             new_data_text = dict()
             new_data_text['x'] = [ds2.data['X_from'][x]]
             new_data_text['y'] = [ds2.data['Y_from'][x]]
-            new_data_text['text'] = [aa[x]]
+            new_data_text['text'] = [aat[x]]
 
             l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
                          text_font_style = 'bold')
@@ -533,7 +541,7 @@ def callback_to2(attrname, old, new):
     print("Length of selected circles to: ", dff)
 
     #сумма movements по выделенным индексам
-    aaa = dff['size'].sum()
+    aaa = dff['text'].sum()
     print("size to: ", aaa)
     
     #сайты из
