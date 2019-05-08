@@ -49,7 +49,7 @@ onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],0)
 supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
 onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>10]
+onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>50]
 
 
 # In[119]:
@@ -83,7 +83,7 @@ odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from'
 odmatrix['movements_norm'] = round(odmatrix['movements_norm'],0)
 
 odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-odmatrix = odmatrix[odmatrix['movements_norm']>30]
+odmatrix = odmatrix[odmatrix['movements_norm']>50]
 
 
 # In[121]:
