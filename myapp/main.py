@@ -460,6 +460,9 @@ def callback2(attrname, old, new):
     #сумма movements по выделенным индексам
     aa = df.groupby(['X_from','Y_from'])['size'].transform(sum)
     aat = df.groupby(['X_from','Y_from'])['text'].transform(sum)
+    
+    df['size_sum'] = aa
+    df['text_sum'] = aat
 
     p_from = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
                   y_range=(7521739.63348639197647572,  7533621.55124872922897339),
@@ -469,6 +472,8 @@ def callback2(attrname, old, new):
                             line_color='red', line_alpha = 0.8, size=6 , source = source_from2,
                       nonselection_fill_alpha=1,
                 nonselection_fill_color='pink')
+    
+    test = df.drop_duplicates(['X_to','Y_to'])
 
     if not idx: #если пустое выделение
 
@@ -476,12 +481,12 @@ def callback2(attrname, old, new):
 
     else: #если не пустое выделение
 
-        for x in idx: #для каждого выделенного индекса рисуем site_to и его параметры
+        for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
 
             new_data = dict()
-            new_data['x'] = [ds2.data['X_from'][x]]
-            new_data['y'] = [ds2.data['Y_from'][x]]
-            new_data['size'] = [aa[x]]
+            new_data['x'] = [list(test['X_to'])[x]]
+            new_data['y'] = [list(test['Y_to'])[x]]
+            new_data['size'] = [list(test['size_sum'])[x]]
 
             t2 = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
                             line_color='red', line_alpha = 0.8, size=[] )
@@ -491,9 +496,9 @@ def callback2(attrname, old, new):
             #текст
 
             new_data_text = dict()
-            new_data_text['x'] = [ds2.data['X_from'][x]]
-            new_data_text['y'] = [ds2.data['Y_from'][x]]
-            new_data_text['text'] = [aat[x]]
+            new_data_text['x'] = [list(test['X_to'])[x]]
+            new_data_text['y'] = [list(test['Y_to'])[x]]
+            new_data_text['text'] = [list(test['text_sum'])[x]]
 
             l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
                          text_font_style = 'bold')
