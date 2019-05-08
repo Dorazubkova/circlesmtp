@@ -459,7 +459,7 @@ def callback2(attrname, old, new):
                       nonselection_fill_alpha=1,
                 nonselection_fill_color='pink')
     
-    test = df.drop_duplicates(['X_to','Y_to'])
+    test = df.drop_duplicates(['X_from','Y_from'])
 
     if not idx: #если пустое выделение
 
@@ -470,8 +470,8 @@ def callback2(attrname, old, new):
         for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
 
             new_data = dict()
-            new_data['x'] = [list(test['X_to'])[x]]
-            new_data['y'] = [list(test['Y_to'])[x]]
+            new_data['x'] = [list(test['X_from'])[x]]
+            new_data['y'] = [list(test['Y_from'])[x]]
             new_data['size'] = [list(test['size_sum'])[x]]
 
             t2 = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
@@ -482,8 +482,8 @@ def callback2(attrname, old, new):
             #текст
 
             new_data_text = dict()
-            new_data_text['x'] = [list(test['X_to'])[x]]
-            new_data_text['y'] = [list(test['Y_to'])[x]]
+            new_data_text['x'] = [list(test['X_from'])[x]]
+            new_data_text['y'] = [list(test['Y_from'])[x]]
             new_data_text['text'] = [list(test['text_sum'])[x]]
 
             l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
