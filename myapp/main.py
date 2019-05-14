@@ -432,7 +432,7 @@ def callback(attrname, old, new):
                 lds=l.data_source
                 lds.data = new_data_text
 
-                #layout1.children[1] = p_to #обновить график справа
+                layout1.children[1] = p_to #обновить график справа
                                       
                 
     else:
