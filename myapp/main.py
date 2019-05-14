@@ -432,7 +432,7 @@ def callback(attrname, old, new):
                 
                 print(x)
 
-#                 layout1.children[1] = p_to #обновить график справа
+                layout1.children[1] = p_to #обновить график справа
                                       
                 
     else:
