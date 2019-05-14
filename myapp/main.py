@@ -394,7 +394,7 @@ def callback(attrname, old, new):
 
     test = df.drop_duplicates(['X_to','Y_to'])
     
-    test = test[test['text_sum'] > 30]
+    #test = test[test['text_sum'] > 30]
     
     if but == 0:
         
