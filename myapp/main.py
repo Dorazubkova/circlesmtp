@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[135]:
+# In[150]:
 
 
 from bokeh.server.server import Server as server
@@ -24,7 +24,7 @@ from bokeh.application.handlers.function import FunctionHandler
 output_notebook()
 
 
-# In[136]:
+# In[151]:
 
 
 onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -53,16 +53,16 @@ onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],0)
 supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
 onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
+onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>30]
 onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/3, 0)
 onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
 onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
 
 
-# In[ ]:
+# In[152]:
 
 
-
+pd.DataFrame.to_csv(onoffmatrix_8, 'onoffmatrix_8.csv', sep=';', index=False, encoding = 'cp1251')
 
 
 # In[137]:
@@ -89,7 +89,7 @@ odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from'
 odmatrix['movements_norm'] = round(odmatrix['movements_norm'],0)
 
 odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-odmatrix = odmatrix[odmatrix['movements_norm']>1]
+odmatrix = odmatrix[odmatrix['movements_norm']>30]
 odmatrix['movesize'] = round(odmatrix['movements_norm']/3, 0)
 odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
 odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
@@ -408,6 +408,8 @@ def callback(attrname, old, new):
 
             for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
                 
+                print ('индекс',x)
+                
                 new_data = dict()
                 new_data_text = dict()
                 
@@ -429,10 +431,8 @@ def callback(attrname, old, new):
                              text_font_style = 'bold')
                 lds=l.data_source
                 lds.data = new_data_text
-                
-                print(x)
 
-                layout1.children[1] = p_to #обновить график справа
+                #layout1.children[1] = p_to #обновить график справа
                                       
                 
     else:
