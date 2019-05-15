@@ -1,14 +1,14 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[150]:
+# In[50]:
 
 
+import bokeh
 from bokeh.server.server import Server as server
 from bokeh.io import show, output_notebook
 from bokeh.plotting import figure, show, output_notebook
 from bokeh.tile_providers import CARTODBPOSITRON
-import bokeh
 import pandas as pd
 import os
 import sys
@@ -17,14 +17,14 @@ from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.plotting import ColumnDataSource, Figure
-from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup
+from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider
 import bokeh.layouts as layout
 from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
 output_notebook()
 
 
-# In[151]:
+# In[51]:
 
 
 onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -52,20 +52,14 @@ onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],0)
 #сайты Тушино из
 supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
-#onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
 onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
 onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/3, 0)
 onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
 onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
 
 
-# In[152]:
-
-
-pd.DataFrame.to_csv(onoffmatrix_8, 'onoffmatrix_8.csv', sep=';', index=False, encoding = 'cp1251')
-
-
-# In[137]:
+# In[52]:
 
 
 odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -95,14 +89,14 @@ odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
 odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 
 
-# In[138]:
+# In[53]:
 
 
 supers_names = pd.read_csv('myapp/supers_names.csv', sep = ';', encoding='cp1251')
 supers_labels = pd.merge(supers_Moscow, supers_names, how = 'inner', on = ['super_site'])
 
 
-# In[139]:
+# In[54]:
 
 
 cds_lb_from = dict(X_from=list(supers_labels['X'].values), 
@@ -122,7 +116,7 @@ cds_lb_to = dict(X_to=list(supers_labels['X'].values),
 source_lb_to = ColumnDataSource(data = cds_lb_to)
 
 
-# In[140]:
+# In[55]:
 
 
 cds = dict(
@@ -135,7 +129,7 @@ cds = dict(
                         sitesto=[])
 
 
-# In[141]:
+# In[56]:
 
 
 source_from = ColumnDataSource(data = cds)
@@ -147,7 +141,7 @@ source_from2 = ColumnDataSource(data = cds)
 source_to2 = ColumnDataSource(data = cds)
 
 
-# In[142]:
+# In[57]:
 
 
 lasso_from = LassoSelectTool(select_every_mousemove=False)
@@ -222,11 +216,8 @@ t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 0.6,
                    nonselection_fill_alpha = 0.6, nonselection_fill_color = 'red')
 
 
-
 ds = r.data_source
 tds = t.data_source
-
-
 
 
 p2 = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), y_range=(7521739.63348639197647572,  7533621.55124872922897339),
@@ -287,7 +278,7 @@ ds2 = r2.data_source
 tds2 = t2.data_source
 
 
-# In[143]:
+# In[58]:
 
 
 #widgets
@@ -296,8 +287,9 @@ stats2 = Paragraph(text='', width=250)
 menu = [('onoffmatrix_7', 'onoffmatrix_7'), ('onoffmatrix_8', 'onoffmatrix_8'), ('odmatrix_7', 'odmatrix_7'),
        ('odmatrix_8', 'odmatrix_8')]
 select = Dropdown(label="Выберите матрицу: ", menu = menu)
-
 button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'])
+slider1 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
+slider2 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
 
 
 def update(attrname, old, new):
@@ -338,7 +330,7 @@ def update(attrname, old, new):
 select.on_change('value', update)
 
 
-# In[144]:
+# In[59]:
 
 
 def update_selection_to(idx_to):
@@ -351,8 +343,10 @@ def update_selection_from(idx2):
 def callback(attrname, old, new):
 
     but = button1.active
+    val = slider1.value
     
     idx = source_from.selected.indices
+
 
     print("Indices of selected circles from: ", idx)
     print("Length of selected circles from: ", len(idx))
@@ -364,6 +358,7 @@ def callback(attrname, old, new):
     aat = df.groupby(['X_to','Y_to'])['text'].transform(sum)
     df['size_sum'] = aa
     df['text_sum'] = aat
+
 
     p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
                   y_range=(7521739.63348639197647572,  7533621.55124872922897339),
@@ -394,7 +389,9 @@ def callback(attrname, old, new):
 
     test = df.drop_duplicates(['X_to','Y_to'])
     
-    #test = test[test['text_sum'] > 30]
+    test = test[(test['text_sum'] >= val[0]) & (test['text_sum'] <= val[1])]
+    
+    print(test)
     
     if but == 0:
         
@@ -405,34 +402,28 @@ def callback(attrname, old, new):
             layout1.children[1] = p_to #обновить график справа
 
         else: #если не пустое выделение
-
-            for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
-                
-                print ('индекс',x)
-                
-                new_data = dict()
-                new_data_text = dict()
-                
-                new_data['x'] = [list(test['X_to'])[x]]
-                new_data['y'] = [list(test['Y_to'])[x]]
-                new_data['size'] = [list(test['size_sum'])[x]]
-
-                new_data_text['x'] = [list(test['X_to'])[x]]
-                new_data_text['y'] = [list(test['Y_to'])[x]]
-                new_data_text['text'] = [list(test['text_sum'])[x]]
-
-                t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
+            
+            new_data = dict()
+            new_data['x'] = list(test['X_to'])
+            new_data['y'] = list(test['Y_to'])
+            new_data['size'] = list(test['size_sum'])
+            
+            new_data_text = dict()
+            new_data_text['x'] = list(test['X_to'])
+            new_data_text['y'] = list(test['Y_to'])
+            new_data_text['text'] = list(test['text_sum'])
+            
+            t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
                                 line_color='red', line_alpha = 0.8, size=[] )
-                tds_to=t_to.data_source
-                tds_to.data = new_data
+            tds_to=t_to.data_source
+            tds_to.data = new_data
+    
+            l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+                         text_font_style = 'bold')
+            lds=l.data_source
+            lds.data = new_data_text
 
-
-                l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-                             text_font_style = 'bold')
-                lds=l.data_source
-                lds.data = new_data_text
-
-                layout1.children[1] = p_to #обновить график справа
+            layout1.children[1] = p_to #обновить график справа        
                                       
                 
     else:
@@ -443,12 +434,13 @@ def callback(attrname, old, new):
 source_from.selected.on_change('indices', callback) 
 
 
-# In[145]:
+# In[60]:
 
 
 def callback2(attrname, old, new):
     
     but = button1.active
+    val = slider2.value
     
     idx = source_to2.selected.indices
     
@@ -490,7 +482,7 @@ def callback2(attrname, old, new):
 
     test = df.drop_duplicates(['X_from','Y_from'])
     
-    test = test[test['text_sum'] > 30]
+    test = test[(test['text_sum'] >= val[0]) & (test['text_sum'] <= val[1])]
       
     
     if but == 0:
@@ -502,33 +494,31 @@ def callback2(attrname, old, new):
             layout2.children[1] = p_from #обновить график справа
 
         else: #если не пустое выделение
-
-            for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
                 
-                new_data = dict()
-                new_data_text = dict()
+            new_data = dict()
+            new_data_text = dict()
 
-                new_data['x'] = [list(test['X_from'])[x]]
-                new_data['y'] = [list(test['Y_from'])[x]]
-                new_data['size'] = [list(test['size_sum'])[x]]
+            new_data['x'] = list(test['X_from'])
+            new_data['y'] = list(test['Y_from'])
+            new_data['size'] = list(test['size_sum'])
 
-                new_data_text['x'] = [list(test['X_from'])[x]]
-                new_data_text['y'] = [list(test['Y_from'])[x]]
-                new_data_text['text'] = [list(test['text_sum'])[x]]
-
-                
-                t_from = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-                                line_color='red', line_alpha = 0.8, size=[] )
-                tds2=t_from.data_source
-                tds2.data = new_data
+            new_data_text['x'] = list(test['X_from'])
+            new_data_text['y'] = list(test['Y_from'])
+            new_data_text['text'] = list(test['text_sum'])
 
 
-                l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-                             text_font_style = 'bold')
-                lds2=l2.data_source
-                lds2.data = new_data_text
+            t_from = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
+                            line_color='red', line_alpha = 0.8, size=[] )
+            tds2=t_from.data_source
+            tds2.data = new_data
 
-                layout2.children[1] = p_from #обновить график справа
+
+            l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+                         text_font_style = 'bold')
+            lds2=l2.data_source
+            lds2.data = new_data_text
+
+            layout2.children[1] = p_from #обновить график справа
                 
     else:
         
@@ -538,7 +528,7 @@ def callback2(attrname, old, new):
 source_to2.selected.on_change('indices', callback2)
 
 
-# In[146]:
+# In[61]:
 
 
 def callback_to(attrname, old, new):
@@ -586,9 +576,7 @@ def callback_to(attrname, old, new):
                             line_color='red', line_alpha = 1, size=6 , source = source_to,
                    nonselection_fill_alpha = 1, nonselection_fill_color = 'red', 
                                 nonselection_line_color='red', nonselection_line_alpha = 1)
-    
 
-    
     
     test = dff.drop_duplicates(['X_to','Y_to'])
 
@@ -608,28 +596,26 @@ def callback_to(attrname, old, new):
             layout1.children[1] = p_to #обновить график справа         
             
         else:
-            
-            for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
                 
-                new_data = dict()
-                new_data['x'] = [list(test['X_to'])[x]]
-                new_data['y'] = [list(test['Y_to'])[x]]
+            new_data = dict()
+            new_data['x'] = list(test['X_to'])
+            new_data['y'] = list(test['Y_to'])
 
-                t_to = p_to.circle(x = [], y = [], fill_color='red', fill_alpha = 0.5, 
-                                line_color='red', line_alpha = 0.8, size=15)
-                tds_to=t_to.data_source
-                tds_to.data = new_data
+            t_to = p_to.circle(x = [], y = [], fill_color='red', fill_alpha = 0.5, 
+                            line_color='red', line_alpha = 0.8, size=15)
+            tds_to=t_to.data_source
+            tds_to.data = new_data
 
-                layout1.children[1] = p_to #обновить график справа
+            layout1.children[1] = p_to #обновить график справа
 
-                stats.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а) в час"
+            stats.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а) в час"
 
     
 
 source_to.selected.on_change('indices', callback_to)
 
 
-# In[147]:
+# In[62]:
 
 
 def update_selection_from2(idx2):
@@ -699,37 +685,30 @@ def callback_to2(attrname, old, new):
             layout2.children[1] = p_from #обновить график справа         
             
         else:
-            
-            for x in range(len(test)): #для каждого выделенного индекса рисуем site_to и его параметры
                 
-                new_data = dict()
-                new_data['x'] = [list(test['X_from'])[x]]
-                new_data['y'] = [list(test['Y_from'])[x]]
+            new_data = dict()
+            new_data['x'] = list(test['X_from'])
+            new_data['y'] = list(test['Y_from'])
 
-                t_from = p_from.circle(x = [], y = [], fill_color='red', fill_alpha = 0.5, 
-                                line_color='red', line_alpha = 0.8, size=15)
-                tds_from=t_from.data_source
-                tds_from.data = new_data
+            t_from = p_from.circle(x = [], y = [], fill_color='red', fill_alpha = 0.5, 
+                            line_color='red', line_alpha = 0.8, size=15)
+            tds_from=t_from.data_source
+            tds_from.data = new_data
 
-                layout2.children[1] = p_from #обновить график справа
-    
+            layout2.children[1] = p_from #обновить график справа
 
-                stats2.text = "В сайты " + str(list(sitesto)) + " из сайтов " + str(list(sitesfrom)) + " едет " + str(aaa) + " человек(а) в час"
+
+            stats2.text = "В сайты " + str(list(sitesto)) + " из сайтов " + str(list(sitesfrom)) + " едет " + str(aaa) + " человек(а) в час"
 
 
 source_from2.selected.on_change('indices', callback_to2)
 
 
-# In[ ]:
+# In[63]:
 
 
-
-
-
-# In[ ]:
-
-
-
+slider1.on_change('value', callback)
+slider2.on_change('value', callback2)
 
 
 # In[ ]:
@@ -744,20 +723,32 @@ source_from2.selected.on_change('indices', callback_to2)
 
 
 
-# In[148]:
+# In[ ]:
 
 
-layout1 = layout.row(p,p_to,stats,select)
-layout2 = layout.row(p2, p_from,stats2,button1)
+
+
+
+# In[64]:
+
+
+layout1 = layout.row(p,p_to)
+layout2 = layout.row(p2, p_from)
+layout3 = layout.column(slider1, stats)
+layout4 = layout.column(slider2, stats2)
+layout5 = layout.column(button1, select)
+layout6 = layout.row(layout1, layout3, layout5)
+layout7 = layout.row(layout2, layout4)
+
 
 # Create Tabs
-box = layout.column(layout1, layout2)
+box = layout.column(layout6, layout7)
 
 
 curdoc().add_root(box)
 
 
-# In[149]:
+# In[65]:
 
 
 # apps = {'/': Application(FunctionHandler(make_document))}
