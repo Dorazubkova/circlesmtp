@@ -52,7 +52,7 @@ onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],0)
 #сайты Тушино из
 supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
-onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+#onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
 onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
 onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/3, 0)
 onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
