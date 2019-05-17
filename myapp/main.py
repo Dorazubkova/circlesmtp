@@ -164,7 +164,7 @@ toolList_from2 = [lasso_from2, 'tap', 'reset', 'save', 'pan','wheel_zoom', hover
 toolList_to2 = [lasso_to2, 'tap', 'reset', 'save', 'pan','wheel_zoom', hover]
 
 
-p = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+p = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
           x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from)
 p.add_tile(CARTODBPOSITRON)
 
@@ -193,7 +193,7 @@ r = p.circle(x = 'X_from',
         nonselection_fill_alpha=1,
         nonselection_fill_color='gray')
 
-p_to = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+p_to = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
           x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
 p_to.add_tile(CARTODBPOSITRON)
 
@@ -225,7 +225,7 @@ ds = r.data_source
 tds = t.data_source
 
 
-p2 = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+p2 = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
               x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from2)
 p2.add_tile(CARTODBPOSITRON)
 
@@ -256,7 +256,7 @@ r2 = p2.circle(x = 'X_to',
         nonselection_fill_color='gray')
 
 
-p_from = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+p_from = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
           x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
 p_from.add_tile(CARTODBPOSITRON)
 
@@ -383,7 +383,7 @@ def callback(attrname, old, new):
     df['text_sum'] = aat
 
 
-    p_to = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+    p_to = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
                   x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
     p_to.add_tile(CARTODBPOSITRON)
     
@@ -478,7 +478,7 @@ def callback2(attrname, old, new):
     df['size_sum'] = aa
     df['text_sum'] = aat
 
-    p_from = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+    p_from = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
                   x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
     p_from.add_tile(CARTODBPOSITRON)
     
@@ -572,7 +572,7 @@ def callback_to(attrname, old, new):
     print("Length of selected circles to: ", dff)
     
     
-    p_to = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+    p_to = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
                   x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
     p_to.add_tile(CARTODBPOSITRON)
     
@@ -663,7 +663,7 @@ def callback_to2(attrname, old, new):
     dff = pd.DataFrame(data=tds2.data).loc[inters_idx]
     print("Length of selected circles to: ", dff)
     
-    p_from = figure(x_range=(4149440.825 , 4214922.646), y_range=(7479622.046,  7542236.999),
+    p_from = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
                   x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
     p_from.add_tile(CARTODBPOSITRON)
     
