@@ -92,6 +92,11 @@ odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 # In[53]:
 
 
+supers_okrugs = pd.read_csv('myapp/supers_okrugs.csv', sep = ';', encoding='cp1251')
+supers_okrugs = supers_okrugs.sort_values(['name_okrug'])
+supers_okrugs['id'] = supers_okrugs.groupby(['name_okrug']).ngroup()
+okrugs_names = list(supers_okrugs['name_okrug'].sort_values().drop_duplicates())
+
 supers_names = pd.read_csv('myapp/supers_names.csv', sep = ';', encoding='cp1251')
 supers_labels = pd.merge(supers_Moscow, supers_names, how = 'inner', on = ['super_site'])
 
@@ -290,44 +295,62 @@ select = Dropdown(label="Выберите матрицу: ", menu = menu)
 button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'])
 slider1 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
 slider2 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
+checkbox_group = CheckboxGroup(labels=okrugs_names, active=[])
 
 
 def update(attrname, old, new):
     
     sl = select.value
     print(sl)
+    ok = checkbox_group.active
     df = pd.DataFrame(data = eval(sl))
     print(df.columns.values)
+       
+    df1 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_from'], right_on = ['super_site'])
+    df1 = df1[df1['id'].isin(ok)]
     
-    cds_upd = dict(     X_from=list(df['X_from'].values), 
-                        Y_from=list(df['Y_from'].values),
-                        size=list(df['movesize'].values),
-                        X_to=list(df['X_to'].values), 
-                        Y_to=list(df['Y_to'].values),
-                        sitesfrom=list(df['super_site_from'].values),
-                        sitesto=list(df['super_site_to'].values),
-                        text=list(df['movements_norm'].values))
+    df2 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_to'], right_on = ['super_site'])
+    df2 = df2[df2['id'].isin(ok)]
+    
+    cds_upd1 = dict(     X_from=list(df1['X_from'].values), 
+                        Y_from=list(df1['Y_from'].values),
+                        size=list(df1['movesize'].values),
+                        X_to=list(df1['X_to'].values), 
+                        Y_to=list(df1['Y_to'].values),
+                        sitesfrom=list(df1['super_site_from'].values),
+                        sitesto=list(df1['super_site_to'].values),
+                        text=list(df1['movements_norm'].values))
+    
+    cds_upd2 = dict(     X_from=list(df2['X_from'].values), 
+                        Y_from=list(df2['Y_from'].values),
+                        size=list(df2['movesize'].values),
+                        X_to=list(df2['X_to'].values), 
+                        Y_to=list(df2['Y_to'].values),
+                        sitesfrom=list(df2['super_site_from'].values),
+                        sitesto=list(df2['super_site_to'].values),
+                        text=list(df2['movements_norm'].values))
 
     #1
-    source_from_sl = ColumnDataSource(data = cds_upd)
+    source_from_sl = ColumnDataSource(data = cds_upd1)
     source_from.data = source_from_sl.data
 
     #2
-    source_to_sl = ColumnDataSource(data = cds_upd)
+    source_to_sl = ColumnDataSource(data = cds_upd1)
     source_to.data = source_to_sl.data
 
     #3
-    source_from_sl2 = ColumnDataSource(data = cds_upd)
+    source_from_sl2 = ColumnDataSource(data = cds_upd2)
     source_from2.data = source_from_sl2.data
 
     #4
-    source_to_sl2 = ColumnDataSource(data = cds_upd)
+    source_to_sl2 = ColumnDataSource(data = cds_upd2)
     source_to2.data = source_to_sl2.data
 
     Time_Title.text = "Матрица: " + sl
 
 
 select.on_change('value', update)
+checkbox_group.on_change('active', update)
 
 
 # In[59]:
@@ -736,7 +759,7 @@ layout1 = layout.row(p,p_to)
 layout2 = layout.row(p2, p_from)
 layout3 = layout.column(slider1, stats)
 layout4 = layout.column(slider2, stats2)
-layout5 = layout.column(button1, select)
+layout5 = layout.column(button1, select, checkbox_group)
 layout6 = layout.row(layout1, layout3, layout5)
 layout7 = layout.row(layout2, layout4)
 
