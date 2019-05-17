@@ -755,7 +755,7 @@ layout1 = layout.row(p,p_to)
 layout2 = layout.row(p2, p_from)
 layout3 = layout.column(slider1, stats)
 layout4 = layout.column(slider2, stats2)
-layout5 = layout.column(button1, select, checkbox_group)
+layout5 = layout.column(select, checkbox_group, button1)
 layout6 = layout.row(layout1, layout3, layout5)
 layout7 = layout.row(layout2, layout4)
 
