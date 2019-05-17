@@ -52,7 +52,7 @@ onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],0)
 #сайты Тушино из
 supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
-onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+#onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
 onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
 onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/3, 0)
 onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
@@ -82,7 +82,7 @@ odmatrix = pd.merge(odmatrix,  supers_Moscow, how = 'inner',
 odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
 odmatrix['movements_norm'] = round(odmatrix['movements_norm'],0)
 
-odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+#odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
 odmatrix = odmatrix[odmatrix['movements_norm']>1]
 odmatrix['movesize'] = round(odmatrix['movements_norm']/3, 0)
 odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
