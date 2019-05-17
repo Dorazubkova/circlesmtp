@@ -17,7 +17,7 @@ from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.plotting import ColumnDataSource, Figure
-from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider
+from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider, CheckboxGroup
 import bokeh.layouts as layout
 from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
