@@ -438,8 +438,7 @@ def callback(attrname, old, new):
     df['size_sum'] = df.groupby(['X_to','Y_to'])['size'].transform(sum)
     df['text_sum'] = df.groupby(['X_to','Y_to'])['text'].transform(sum)
 
-    p_to = figure(x_range=(4159272.414 , 4214922.646), y_range=(7478279.661,  7542236.999),
-                  x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
+    p_to = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
     p_to.add_tile(tile_provider)
     
     
