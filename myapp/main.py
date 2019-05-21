@@ -308,8 +308,8 @@ select1 = Dropdown(label="Выберите матрицу: ", menu = menu, butto
 select2 = Dropdown(label="Выберите матрицу: ", menu = menu, button_type  = 'danger')
 button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
 button2 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
-slider1 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций", button_type  = 'success')
-slider2 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций", button_type  = 'success')
+slider1 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
+slider2 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
 checkbox_group1 = CheckboxGroup(labels=okrugs_names, active=[])
 checkbox_group2 = CheckboxGroup(labels=okrugs_names, active=[])
 
