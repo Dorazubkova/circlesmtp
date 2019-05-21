@@ -17,7 +17,7 @@ from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.plotting import ColumnDataSource, Figure
-from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider, CheckboxGroup,HTMLTemplateFormatter,TableColumn
+from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider, CheckboxGroup
 import bokeh.layouts as layout
 from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
@@ -98,13 +98,6 @@ odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 # odmatrix_8 = pd.read_csv('myapp/odmatrix_8.csv', sep = ';', encoding='cp1251')
 
 
-# In[ ]:
-
-
-
-
-
-# In[96]:
 
 
 supers_okrugs = pd.read_csv('myapp/supers_okrugs.csv', sep = ';', encoding='cp1251')
@@ -300,10 +293,7 @@ ds2 = r2.data_source
 tds2 = t2.data_source
 
 
-# In[107]:
 
-
-columns = TableColumn(field='colb', title='CL2', formatter=formatter, width = 100)
 
 
 # In[104]:
