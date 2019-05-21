@@ -33,87 +33,69 @@ tile_provider = get_provider(Vendors.CARTODBPOSITRON)
 # In[93]:
 
 
-# onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
-# onoffmatrix = onoffmatrix[['stop_id_from','stop_id_to','movements_norm', 'hour_on']]
+onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
+onoffmatrix = onoffmatrix[['stop_id_from','stop_id_to','movements_norm', 'hour_on']]
 
-# #остановки-суперсайты
-# stops_supers = pd.read_csv('myapp/stops_supers.csv', sep = ';', encoding='cp1251')
+#остановки-суперсайты
+stops_supers = pd.read_csv('myapp/stops_supers.csv', sep = ';', encoding='cp1251')
 
-# onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_from'], right_on = ['stop_id'])
-# onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_to'], right_on = ['stop_id'])
-# onoffmatrix = onoffmatrix[['super_site_x','super_site_y','movements_norm','hour_on']].rename(columns = {'super_site_x':'super_site_from',
-#                                                                                    'super_site_y':'super_site_to'})
-# onoffmatrix = onoffmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
+onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_from'], right_on = ['stop_id'])
+onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_to'], right_on = ['stop_id'])
+onoffmatrix = onoffmatrix[['super_site_x','super_site_y','movements_norm','hour_on']].rename(columns = {'super_site_x':'super_site_from',
+                                                                                   'super_site_y':'super_site_to'})
+onoffmatrix = onoffmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
 
 supers_Moscow = pd.read_csv('myapp/supers_Mercator.csv', sep = ';')
 supers_Moscow = supers_Moscow.drop_duplicates()
 
-# onoffmatrix = pd.merge(onoffmatrix, supers_Moscow, how = 'inner', 
-#               left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
-# onoffmatrix = pd.merge(onoffmatrix,  supers_Moscow, how = 'inner', 
-#            left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
-# onoffmatrix = onoffmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
-# onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],2)
+onoffmatrix = pd.merge(onoffmatrix, supers_Moscow, how = 'inner', 
+              left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
+onoffmatrix = pd.merge(onoffmatrix,  supers_Moscow, how = 'inner', 
+           left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
+onoffmatrix = onoffmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
+onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],2)
 
-# #сайты Тушино из
-# supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
+#сайты Тушино из
+supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
-# #onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-# #onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
-# onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/1, 0)
-# onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
-# onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
-
-
-# In[ ]:
+#onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+#onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
+onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/1, 0)
+onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
+onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
 
 
+odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
+odmatrix = odmatrix[['site_id_from','site_id_to','movements_norm', 'hour_start']]
+
+#сайты-суперсайты
+sited_supers = pd.read_csv('myapp/sites_supers.csv', sep = ';', encoding='cp1251')
+
+odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_from'], right_on = ['site_id'])
+odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_to'], right_on = ['site_id'])
+odmatrix = odmatrix[['super_site_x','super_site_y','movements_norm','hour_start']].rename(columns = {'super_site_x':'super_site_from',
+                                                                              'super_site_y':'super_site_to', 'hour_start':'hour_on'})
+odmatrix = odmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
 
 
+odmatrix = pd.merge(odmatrix, supers_Moscow, how = 'inner', 
+              left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
+odmatrix = pd.merge(odmatrix,  supers_Moscow, how = 'inner', 
+           left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
+odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
+odmatrix['movements_norm'] = round(odmatrix['movements_norm'],2)
 
-# In[94]:
-
-
-# odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
-# odmatrix = odmatrix[['site_id_from','site_id_to','movements_norm', 'hour_start']]
-
-# #сайты-суперсайты
-# sited_supers = pd.read_csv('myapp/sites_supers.csv', sep = ';', encoding='cp1251')
-
-# odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_from'], right_on = ['site_id'])
-# odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_to'], right_on = ['site_id'])
-# odmatrix = odmatrix[['super_site_x','super_site_y','movements_norm','hour_start']].rename(columns = {'super_site_x':'super_site_from',
-#                                                                               'super_site_y':'super_site_to', 'hour_start':'hour_on'})
-# odmatrix = odmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
+#odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+#odmatrix = odmatrix[odmatrix['movements_norm']>1]
+odmatrix['movesize'] = round(odmatrix['movements_norm']/1, 0)
+odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
+odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 
 
-# odmatrix = pd.merge(odmatrix, supers_Moscow, how = 'inner', 
-#               left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
-# odmatrix = pd.merge(odmatrix,  supers_Moscow, how = 'inner', 
-#            left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
-# odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
-# odmatrix['movements_norm'] = round(odmatrix['movements_norm'],2)
-
-# #odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-# #odmatrix = odmatrix[odmatrix['movements_norm']>1]
-# odmatrix['movesize'] = round(odmatrix['movements_norm']/1, 0)
-# odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
-# odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
-
-
-# In[ ]:
-
-
-
-
-
-# In[95]:
-
-
-onoffmatrix_7 = pd.read_csv('myapp/onoffmatrix_7.csv', sep = ';', encoding='cp1251')
-onoffmatrix_8 = pd.read_csv('myapp/onoffmatrix_8.csv', sep = ';', encoding='cp1251')
-odmatrix_7 = pd.read_csv('myapp/odmatrix_7.csv', sep = ';', encoding='cp1251')
-odmatrix_8 = pd.read_csv('myapp/odmatrix_8.csv', sep = ';', encoding='cp1251')
+# onoffmatrix_7 = pd.read_csv('myapp/onoffmatrix_7.csv', sep = ';', encoding='cp1251')
+# onoffmatrix_8 = pd.read_csv('myapp/onoffmatrix_8.csv', sep = ';', encoding='cp1251')
+# odmatrix_7 = pd.read_csv('myapp/odmatrix_7.csv', sep = ';', encoding='cp1251')
+# odmatrix_8 = pd.read_csv('myapp/odmatrix_8.csv', sep = ';', encoding='cp1251')
 
 
 # In[ ]:
