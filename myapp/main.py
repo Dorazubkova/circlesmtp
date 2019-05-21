@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[32]:
+# In[106]:
 
 
 import bokeh
+from bokeh.server.server import Server as server
 from bokeh.io import show, output_notebook
 from bokeh.plotting import figure, show, output_notebook
 from bokeh.tile_providers import Vendors, get_provider
@@ -16,82 +17,112 @@ from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.plotting import ColumnDataSource, Figure
-from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider, CheckboxGroup
+from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider, CheckboxGroup,HTMLTemplateFormatter,TableColumn
 import bokeh.layouts as layout
+from bokeh.application import Application
+from bokeh.application.handlers.function import FunctionHandler
+output_notebook()
 
-# In[33]:
+
+# In[92]:
 
 
 tile_provider = get_provider(Vendors.CARTODBPOSITRON)
 
 
-# In[34]:
+# In[93]:
 
 
-onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
-onoffmatrix = onoffmatrix[['stop_id_from','stop_id_to','movements_norm', 'hour_on']]
+# onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
+# onoffmatrix = onoffmatrix[['stop_id_from','stop_id_to','movements_norm', 'hour_on']]
 
-#остановки-суперсайты
-stops_supers = pd.read_csv('myapp/stops_supers.csv', sep = ';', encoding='cp1251')
+# #остановки-суперсайты
+# stops_supers = pd.read_csv('myapp/stops_supers.csv', sep = ';', encoding='cp1251')
 
-onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_from'], right_on = ['stop_id'])
-onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_to'], right_on = ['stop_id'])
-onoffmatrix = onoffmatrix[['super_site_x','super_site_y','movements_norm','hour_on']].rename(columns = {'super_site_x':'super_site_from',
-                                                                                   'super_site_y':'super_site_to'})
-onoffmatrix = onoffmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
+# onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_from'], right_on = ['stop_id'])
+# onoffmatrix = pd.merge(onoffmatrix, stops_supers, how='inner', left_on = ['stop_id_to'], right_on = ['stop_id'])
+# onoffmatrix = onoffmatrix[['super_site_x','super_site_y','movements_norm','hour_on']].rename(columns = {'super_site_x':'super_site_from',
+#                                                                                    'super_site_y':'super_site_to'})
+# onoffmatrix = onoffmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
 
 supers_Moscow = pd.read_csv('myapp/supers_Mercator.csv', sep = ';')
 supers_Moscow = supers_Moscow.drop_duplicates()
 
-onoffmatrix = pd.merge(onoffmatrix, supers_Moscow, how = 'inner', 
-              left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
-onoffmatrix = pd.merge(onoffmatrix,  supers_Moscow, how = 'inner', 
-           left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
-onoffmatrix = onoffmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
-onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],2)
+# onoffmatrix = pd.merge(onoffmatrix, supers_Moscow, how = 'inner', 
+#               left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
+# onoffmatrix = pd.merge(onoffmatrix,  supers_Moscow, how = 'inner', 
+#            left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
+# onoffmatrix = onoffmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
+# onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],2)
 
-#сайты Тушино из
-#supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
+# #сайты Тушино из
+# supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
-#onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-#onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
-onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/1, 0)
-onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
-onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
-
-
-odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
-odmatrix = odmatrix[['site_id_from','site_id_to','movements_norm', 'hour_start']]
-
-#сайты-суперсайты
-sited_supers = pd.read_csv('myapp/sites_supers.csv', sep = ';', encoding='cp1251')
-
-odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_from'], right_on = ['site_id'])
-odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_to'], right_on = ['site_id'])
-odmatrix = odmatrix[['super_site_x','super_site_y','movements_norm','hour_start']].rename(columns = {'super_site_x':'super_site_from',
-                                                                              'super_site_y':'super_site_to', 'hour_start':'hour_on'})
-odmatrix = odmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
+# #onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+# #onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
+# onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/1, 0)
+# onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
+# onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
 
 
-odmatrix = pd.merge(odmatrix, supers_Moscow, how = 'inner', 
-              left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
-odmatrix = pd.merge(odmatrix,  supers_Moscow, how = 'inner', 
-           left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
-odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
-odmatrix['movements_norm'] = round(odmatrix['movements_norm'],2)
-
-#odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-#odmatrix = odmatrix[odmatrix['movements_norm']>1]
-odmatrix['movesize'] = round(odmatrix['movements_norm']/1, 0)
-odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
-odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
+# In[ ]:
 
 
 
-# onoffmatrix_7 = pd.read_csv('myapp/onoffmatrix_7.csv', sep = ';', encoding='cp1251')
-# onoffmatrix_8 = pd.read_csv('myapp/onoffmatrix_8.csv', sep = ';', encoding='cp1251')
-# odmatrix_7 = pd.read_csv('myapp/odmatrix_7.csv', sep = ';', encoding='cp1251')
-# odmatrix_8 = pd.read_csv('myapp/odmatrix_8.csv', sep = ';', encoding='cp1251')
+
+
+# In[94]:
+
+
+# odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
+# odmatrix = odmatrix[['site_id_from','site_id_to','movements_norm', 'hour_start']]
+
+# #сайты-суперсайты
+# sited_supers = pd.read_csv('myapp/sites_supers.csv', sep = ';', encoding='cp1251')
+
+# odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_from'], right_on = ['site_id'])
+# odmatrix = pd.merge(odmatrix, sited_supers, how='inner', left_on = ['site_id_to'], right_on = ['site_id'])
+# odmatrix = odmatrix[['super_site_x','super_site_y','movements_norm','hour_start']].rename(columns = {'super_site_x':'super_site_from',
+#                                                                               'super_site_y':'super_site_to', 'hour_start':'hour_on'})
+# odmatrix = odmatrix.groupby(['super_site_from','super_site_to','hour_on']).sum().reset_index()
+
+
+# odmatrix = pd.merge(odmatrix, supers_Moscow, how = 'inner', 
+#               left_on = ['super_site_from'], right_on=['super_site']).rename(columns={'X':'X_from','Y':'Y_from'})
+# odmatrix = pd.merge(odmatrix,  supers_Moscow, how = 'inner', 
+#            left_on = ['super_site_to'], right_on=['super_site']).rename(columns={'X':'X_to','Y':'Y_to'})
+# odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from','Y_from','X_to','Y_to','hour_on']]
+# odmatrix['movements_norm'] = round(odmatrix['movements_norm'],2)
+
+# #odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
+# #odmatrix = odmatrix[odmatrix['movements_norm']>1]
+# odmatrix['movesize'] = round(odmatrix['movements_norm']/1, 0)
+# odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
+# odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
+
+
+# In[ ]:
+
+
+
+
+
+# In[95]:
+
+
+onoffmatrix_7 = pd.read_csv('myapp/onoffmatrix_7.csv', sep = ';', encoding='cp1251')
+onoffmatrix_8 = pd.read_csv('myapp/onoffmatrix_8.csv', sep = ';', encoding='cp1251')
+odmatrix_7 = pd.read_csv('myapp/odmatrix_7.csv', sep = ';', encoding='cp1251')
+odmatrix_8 = pd.read_csv('myapp/odmatrix_8.csv', sep = ';', encoding='cp1251')
+
+
+# In[ ]:
+
+
+
+
+
+# In[96]:
 
 
 supers_okrugs = pd.read_csv('myapp/supers_okrugs.csv', sep = ';', encoding='cp1251')
@@ -99,13 +130,13 @@ supers_okrugs = supers_okrugs.sort_values(['name_okrug'])
 supers_okrugs['id'] = supers_okrugs.groupby(['name_okrug']).ngroup()
 
 
-# In[38]:
+# In[97]:
 
 
 okrugs_names = list(supers_okrugs['name_okrug'].sort_values().drop_duplicates())
 
 
-# In[39]:
+# In[98]:
 
 
 supers_names = pd.read_csv('myapp/supers_names.csv', sep = ';', encoding='cp1251')
@@ -126,7 +157,7 @@ cds_lb_to = dict(X_to=list(supers_labels['X'].values),
 source_lb_to = ColumnDataSource(data = cds_lb_to)
 
 
-# In[40]:
+# In[99]:
 
 
 cds = dict(
@@ -147,7 +178,7 @@ source_from2 = ColumnDataSource(data = cds)
 source_to2 = ColumnDataSource(data = cds)
 
 
-# In[41]:
+# In[100]:
 
 
 lasso_from = LassoSelectTool(select_every_mousemove=False)
@@ -287,23 +318,28 @@ ds2 = r2.data_source
 tds2 = t2.data_source
 
 
-# In[42]:
+# In[107]:
+
+
+columns = TableColumn(field='colb', title='CL2', formatter=formatter, width = 100)
+
+
+# In[104]:
 
 
 #widgets
-stats = Paragraph(text='', width=250)
-stats2 = Paragraph(text='', width=250)
+stats = Paragraph(text='', width=250, style={'color': 'blue'})
+stats2 = Paragraph(text='', width=250, style={'color': 'purple'})
 menu = [('onoffmatrix_7', 'onoffmatrix_7'), ('onoffmatrix_8', 'onoffmatrix_8'), ('odmatrix_7', 'odmatrix_7'),
        ('odmatrix_8', 'odmatrix_8')]
-select1 = Dropdown(label="Выберите матрицу: ", menu = menu)
-select2 = Dropdown(label="Выберите матрицу: ", menu = menu)
-button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'])
-button2 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'])
-slider1 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
-slider2 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
+select1 = Dropdown(label="Выберите матрицу: ", menu = menu, button_type  = 'danger')
+select2 = Dropdown(label="Выберите матрицу: ", menu = menu, button_type  = 'danger')
+button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
+button2 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
+slider1 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций", button_type  = 'success')
+slider2 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций", button_type  = 'success')
 checkbox_group1 = CheckboxGroup(labels=okrugs_names, active=[])
 checkbox_group2 = CheckboxGroup(labels=okrugs_names, active=[])
-
 
 def update1(attrname, old, new):
     
@@ -356,7 +392,7 @@ select1.on_change('value', update1)
 checkbox_group1.on_change('active', update1)
 
 
-# In[43]:
+# In[ ]:
 
 
 def update2(attrname, old, new):
@@ -409,7 +445,7 @@ select2.on_change('value', update2)
 checkbox_group2.on_change('active', update2)
 
 
-# In[44]:
+# In[ ]:
 
 
 def update_selection_to(idx_to):
@@ -477,8 +513,6 @@ def callback(attrname, old, new):
         else: #если не пустое выделение
             
             new_data_text = dict()
-            new_data_text['x'] = list(test['X_to'])
-            new_data_text['y'] = list(test['Y_to'])
             new_data_text['text'] = list(round(test['text_sum'],2))
             
             print(new_data_text)
@@ -486,18 +520,24 @@ def callback(attrname, old, new):
             new_data = dict()
             new_data['x'] = list(test['X_to'])
             new_data['y'] = list(test['Y_to'])
-            new_data['size'] = [x/1.5 for x in new_data_text['text']]
+            new_data['size'] = [x/2 for x in new_data_text['text']]
+            
+            p_to.circle(x=new_data['x'], y=new_data['y'], size=new_data['size'], fill_color='orange', fill_alpha = 0.6, 
+                                line_color='red', line_alpha = 0.8)
+            
+            p_to.text(x=new_data['x'], y=new_data['y'], text_color='black', text =new_data_text['text'], text_font_size='8pt',
+                          text_font_style = 'bold')
         
             
-            t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-                                line_color='red', line_alpha = 0.8, size=[] )
-            tds_to = t_to.data_source
-            tds_to.data = new_data
+#             t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
+#                                 line_color='red', line_alpha = 0.8, size=[] )
+#             tds_to = t_to.data_source
+#             tds_to.data = new_data
     
-            l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-                         text_font_style = 'bold')
-            lds=l.data_source
-            lds.data = new_data_text
+#             l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+#                          text_font_style = 'bold')
+#             lds=l.data_source
+#             lds.data = new_data_text
 
             layout1.children[1] = p_to #обновить график справа        
                                       
@@ -516,7 +556,7 @@ source_from.selected.on_change('indices', callback)
 
 
 
-# In[45]:
+# In[ ]:
 
 
 def callback2(attrname, old, new):
@@ -575,29 +615,45 @@ def callback2(attrname, old, new):
             layout2.children[1] = p_from #обновить график справа
 
         else: #если не пустое выделение
-                
-            new_data = dict()
-            new_data_text = dict()
             
-            new_data_text['x'] = list(test['X_from'])
-            new_data_text['y'] = list(test['Y_from'])
+            new_data_text = dict()
             new_data_text['text'] = list(round(test['text_sum'],2))
+            
+            print(new_data_text)
+            
+            new_data = dict()
+            new_data['x'] = list(test['X_to'])
+            new_data['y'] = list(test['Y_to'])
+            new_data['size'] = [x/2 for x in new_data_text['text']]
+            
+            p_to.circle(x=new_data['x'], y=new_data['y'], size=new_data['size'], fill_color='orange', fill_alpha = 0.6, 
+                                line_color='red', line_alpha = 0.8)
+            
+            p_to.text(x=new_data['x'], y=new_data['y'], text_color='black', text =new_data_text['text'], text_font_size='8pt',
+                          text_font_style = 'bold')
+                
+#             new_data = dict()
+#             new_data_text = dict()
+            
+#             new_data_text['x'] = list(test['X_from'])
+#             new_data_text['y'] = list(test['Y_from'])
+#             new_data_text['text'] = list(round(test['text_sum'],2))
 
-            new_data['x'] = list(test['X_from'])
-            new_data['y'] = list(test['Y_from'])
-            new_data['size'] = [x/1.5 for x in new_data_text['text']]
+#             new_data['x'] = list(test['X_from'])
+#             new_data['y'] = list(test['Y_from'])
+#             new_data['size'] = [x/1.5 for x in new_data_text['text']]
 
 
-            t_from = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-                            line_color='red', line_alpha = 0.8, size=[] )
-            tds2=t_from.data_source
-            tds2.data = new_data
+#             t_from = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
+#                             line_color='red', line_alpha = 0.8, size=[] )
+#             tds2=t_from.data_source
+#             tds2.data = new_data
 
 
-            l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-                         text_font_style = 'bold')
-            lds2=l2.data_source
-            lds2.data = new_data_text
+#             l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+#                          text_font_style = 'bold')
+#             lds2=l2.data_source
+#             lds2.data = new_data_text
 
             layout2.children[1] = p_from #обновить график справа
                 
@@ -609,7 +665,7 @@ def callback2(attrname, old, new):
 source_to2.selected.on_change('indices', callback2)
 
 
-# In[46]:
+# In[ ]:
 
 
 def callback_to(attrname, old, new):
@@ -695,7 +751,7 @@ def callback_to(attrname, old, new):
 source_to.selected.on_change('indices', callback_to)
 
 
-# In[47]:
+# In[ ]:
 
 
 def update_selection_from2(idx2):
@@ -783,14 +839,14 @@ def callback_to2(attrname, old, new):
 source_from2.selected.on_change('indices', callback_to2)
 
 
-# In[48]:
+# In[ ]:
 
 
 slider1.on_change('value', callback)
 slider2.on_change('value', callback2)
 
 
-# In[49]:
+# In[ ]:
 
 
 layout1 = layout.row(p,p_to)
@@ -811,7 +867,7 @@ box = layout.column(layout7, layout8)
 curdoc().add_root(box)
 
 
-# In[50]:
+# In[ ]:
 
 
 # apps = {'/': Application(FunctionHandler(make_document))}
@@ -838,7 +894,7 @@ curdoc().add_root(box)
 
 
 
-# In[51]:
+# In[ ]:
 
 
 # def update_selection_to(idx_to):
