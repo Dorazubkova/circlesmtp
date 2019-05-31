@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[106]:
+# In[27]:
 
 
 import bokeh
@@ -12,25 +12,30 @@ from bokeh.tile_providers import Vendors, get_provider
 import pandas as pd
 import os
 import sys
-from bokeh.models import ColumnDataSource, HoverTool, LassoSelectTool, Label, Title
+import numpy as np
+from bokeh.models import ColumnDataSource, HoverTool, LassoSelectTool, Label, Title, ZoomInTool, ZoomOutTool
 from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
 from bokeh.plotting import ColumnDataSource, Figure
-from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider, CheckboxGroup
+from bokeh.models.widgets import PreText, Paragraph, Select, Dropdown, RadioButtonGroup, RangeSlider, Slider, CheckboxGroup,HTMLTemplateFormatter,TableColumn
 import bokeh.layouts as layout
 from bokeh.application import Application
 from bokeh.application.handlers.function import FunctionHandler
+from sklearn.cluster import DBSCAN
+from sklearn.cluster import KMeans
+from shapely.geometry import Point
+import geopandas as gpd
 output_notebook()
 
 
-# In[92]:
+# In[28]:
 
 
 tile_provider = get_provider(Vendors.CARTODBPOSITRON)
 
 
-# In[93]:
+# In[29]:
 
 
 onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -59,10 +64,19 @@ onoffmatrix['movements_norm'] = round(onoffmatrix['movements_norm'],2)
 supers_T = pd.read_csv('myapp/supersites_Tushino.csv', sep = ';')
 
 #onoffmatrix = pd.merge(onoffmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-#onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>1]
+#onoffmatrix = onoffmatrix[onoffmatrix['movements_norm']>0.5]
 onoffmatrix['movesize'] = round(onoffmatrix['movements_norm']/1, 0)
 onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
 onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
+
+
+# In[ ]:
+
+
+
+
+
+# In[30]:
 
 
 odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -86,18 +100,13 @@ odmatrix = odmatrix[['super_site_from','super_site_to','movements_norm','X_from'
 odmatrix['movements_norm'] = round(odmatrix['movements_norm'],2)
 
 #odmatrix = pd.merge(odmatrix, supers_T, how='inner',left_on=['super_site_from'], right_on=['super_site'])
-#odmatrix = odmatrix[odmatrix['movements_norm']>1]
+#odmatrix = odmatrix[odmatrix['movements_norm']>0.5]
 odmatrix['movesize'] = round(odmatrix['movements_norm']/1, 0)
 odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
 odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 
 
-# onoffmatrix_7 = pd.read_csv('myapp/onoffmatrix_7.csv', sep = ';', encoding='cp1251')
-# onoffmatrix_8 = pd.read_csv('myapp/onoffmatrix_8.csv', sep = ';', encoding='cp1251')
-# odmatrix_7 = pd.read_csv('myapp/odmatrix_7.csv', sep = ';', encoding='cp1251')
-# odmatrix_8 = pd.read_csv('myapp/odmatrix_8.csv', sep = ';', encoding='cp1251')
-
-
+# In[31]:
 
 
 supers_okrugs = pd.read_csv('myapp/supers_okrugs.csv', sep = ';', encoding='cp1251')
@@ -105,13 +114,13 @@ supers_okrugs = supers_okrugs.sort_values(['name_okrug'])
 supers_okrugs['id'] = supers_okrugs.groupby(['name_okrug']).ngroup()
 
 
-# In[97]:
+# In[32]:
 
 
 okrugs_names = list(supers_okrugs['name_okrug'].sort_values().drop_duplicates())
 
 
-# In[98]:
+# In[33]:
 
 
 supers_names = pd.read_csv('myapp/supers_names.csv', sep = ';', encoding='cp1251')
@@ -132,7 +141,7 @@ cds_lb_to = dict(X_to=list(supers_labels['X'].values),
 source_lb_to = ColumnDataSource(data = cds_lb_to)
 
 
-# In[99]:
+# In[34]:
 
 
 cds = dict(
@@ -142,7 +151,8 @@ cds = dict(
                         X_to=[], 
                         Y_to=[],
                         sitesfrom=[],
-                        sitesto=[])
+                        sitesto=[],
+                        text=[])
 
 source_from = ColumnDataSource(data = cds)
 
@@ -153,7 +163,7 @@ source_from2 = ColumnDataSource(data = cds)
 source_to2 = ColumnDataSource(data = cds)
 
 
-# In[100]:
+# In[35]:
 
 
 lasso_from = LassoSelectTool(select_every_mousemove=False)
@@ -164,15 +174,19 @@ lasso_to2 = LassoSelectTool(select_every_mousemove=False)
 
 hover = HoverTool(tooltips=[("super_site_name", "@super_site_name")], names=["label"])
 
-toolList_from = [lasso_from,  'reset',  'pan','wheel_zoom', hover]
-toolList_to = [lasso_to,  'reset',  'pan','wheel_zoom', hover]
+zoom1 = ZoomInTool(factor=0.5)
+zoom2 = ZoomOutTool(factor=0.5)
+
+toolList_from = [lasso_from,  'reset',  'pan','wheel_zoom', hover, zoom1, zoom2]
+toolList_to = [lasso_to,  'reset',  'pan', 'wheel_zoom', hover, zoom1, zoom2]
 
 toolList_from2 = [lasso_from2, 'reset', 'pan','wheel_zoom', hover]
 toolList_to2 = [lasso_to2,  'reset',  'pan','wheel_zoom', hover]
 
 
-p = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from)
+p = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from)
 p.add_tile(tile_provider)
+
 
 p.add_layout(Title(text='Фильтр корреспонденций "ИЗ"', text_font_size='10pt', text_color = 'blue'), 'above')
 
@@ -199,7 +213,7 @@ r = p.circle(x = 'X_from',
         nonselection_fill_alpha=1,
         nonselection_fill_color='gray')
 
-p_to = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
+p_to = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
 p_to.add_tile(tile_provider)
 
 Time_Title1 = Title(text='Матрица: ', text_font_size='10pt', text_color = 'grey')
@@ -228,6 +242,15 @@ t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='papayawhip', fill_alpha = 0.
 
 ds = r.data_source
 tds = t.data_source
+
+
+t_to = p_to.circle(x = [], y = [], fill_color=[], fill_alpha = 0.6, 
+                                line_color= None, line_alpha = 0.8, size=[] ) 
+l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+                         text_font_style = 'bold')
+
+tds_to = t_to.data_source
+lds=l.data_source
 
 
 p2 = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from2)
@@ -284,28 +307,35 @@ lb_from = p_from.circle(x = 'X_to',
 t2 = p_from.circle(x = 'X_from', y = 'Y_from', fill_color='papayawhip', fill_alpha = 0.6, 
                             line_color='tan', line_alpha = 0.8, size=6 , source = source_from2)
 
+t_from = p_from.circle(x = [], y = [], fill_color=[], fill_alpha = 0.6, 
+                                line_color= None, line_alpha = 0.8, size=[] ) 
+l_from = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
+                         text_font_style = 'bold')
+
+tds_from = t_from.data_source
+lds_from=l_from.data_source
+
 
 ds2 = r2.data_source
 tds2 = t2.data_source
 
 
-
-
-
-# In[104]:
+# In[36]:
 
 
 #widgets
-stats = Paragraph(text='', width=250, style={'color': 'blue'})
-stats2 = Paragraph(text='', width=250, style={'color': 'purple'})
+stats = Paragraph(text='', width=500, style={'color': 'blue'})
+stats2 = Paragraph(text='', width=500, style={'color': 'purple'})
 menu = [('onoffmatrix_7', 'onoffmatrix_7'), ('onoffmatrix_8', 'onoffmatrix_8'), ('odmatrix_7', 'odmatrix_7'),
        ('odmatrix_8', 'odmatrix_8')]
-select1 = Dropdown(label="Выберите матрицу: ", menu = menu, button_type  = 'danger')
-select2 = Dropdown(label="Выберите матрицу: ", menu = menu, button_type  = 'danger')
+select1 = Dropdown(label="1. ВЫБЕРИТЕ МАТРИЦУ:", menu = menu, button_type  = 'danger')
+select2 = Dropdown(label="1. ВЫБЕРИТЕ МАТРИЦУ:", menu = menu, button_type  = 'danger')
+text_okrug = Paragraph(text='2. ВЫБЕРИТЕ ОКРУГ:', width=500, height=10, style={'color': 'white', 'background':'green'})
+text_func = Paragraph(text='3. ВЫБЕРИТЕ ДЕЙСТВИЕ:', width=500, height=10, style={'color': 'white', 'background':'steelblue'})
 button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
 button2 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
-slider1 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
-slider2 = RangeSlider(start=0, end=1000, value=(50,200), step=50, title="Диапазон корреспонденций")
+slider1 = RangeSlider(start=0, end=1000, value=(50,1000), step=50, title="Сайты, с которых корреспонденции в диапазоне:", callback_policy="mouseup")
+slider2 = RangeSlider(start=0, end=1000, value=(50,1000), step=50, title="Сайты, с которых корреспонденции в диапазоне:")
 checkbox_group1 = CheckboxGroup(labels=okrugs_names, active=[])
 checkbox_group2 = CheckboxGroup(labels=okrugs_names, active=[])
 
@@ -314,18 +344,21 @@ def update1(attrname, old, new):
     sl = select1.value
     print(sl)
     
-    ok = checkbox_group1.active  
-    print(ok)
+    ok = checkbox_group1.active 
+    val = slider1.value
     
     df = globals()[sl]
        
     df1 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_from'], right_on = ['super_site'])
     df1 = df1[df1['id'].isin(ok)]
+    df1['movements_from'] = df1.groupby(['super_site_from'])['movements_norm'].transform(sum)
+    df1 = df1[(df1['movements_from'] >= val[0]) & (df1['movements_from'] <= val[1])]
     
     print(len(df1))
     
     df2 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_to'], right_on = ['super_site'])
     df2 = df2[df2['id'].isin(ok)]
+    df2 = df2[(df2['movements_norm'] >= val[0]) & (df2['movements_norm'] <= val[1])]
     
     cds_upd1 = dict(     X_from=list(df1['X_from'].values), 
                         Y_from=list(df1['Y_from'].values),
@@ -360,7 +393,7 @@ select1.on_change('value', update1)
 checkbox_group1.on_change('active', update1)
 
 
-# In[ ]:
+# In[37]:
 
 
 def update2(attrname, old, new):
@@ -413,7 +446,203 @@ select2.on_change('value', update2)
 checkbox_group2.on_change('active', update2)
 
 
+# In[38]:
+
+
+slider1.on_change('value', update1)
+slider2.on_change('value', update2)
+
+
+# In[39]:
+
+
+#             eps = 500
+#             min_samples = 0     
+   
+#             db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+#             labels = db.labels_    
+
+
+# In[40]:
+
+
+dd_to = [600000]
+def previous_to(d):    
+    dd_to.append(d)
+    return dd_to    
+
+
 # In[ ]:
+
+
+dd_from = [600000]
+def previous_from(d):    
+    dd_from.append(d)
+    return dd_from   
+
+
+# In[41]:
+
+
+index_to = [[0]]
+def previous_idx_to(idx):
+    index_to.append(idx)
+    return index_to
+
+
+# In[ ]:
+
+
+index_from = [[0]]
+def previous_idx_from(idx):
+    index_from.append(idx)
+    return index_from
+
+
+# In[42]:
+
+
+def zoom_groups(x):
+    if x > 601000:
+        group = 0
+    elif x >= 40000:
+        group = 1
+    elif x >= 20000:
+        group = 2
+    else:
+        group = 3
+    return group    
+
+
+# In[43]:
+
+
+def center(x, y, mass):
+    sumMass = sum(mass)
+    momentX = sum([x*y for x, y in zip(x, mass)])
+    momentY = sum([x*y for x, y in zip(y, mass)])
+    xCentr = momentX / sumMass
+    yCentr = momentY / sumMass
+    return [xCentr, yCentr]
+
+
+# In[44]:
+
+
+def cluster_to(test, X, n, color):
+    
+    X_to_new = []
+    Y_to_new = []
+    
+    kmeans = KMeans(n_clusters=int(np.ceil(len(test)/n)))
+    kmeans.fit(X)
+    y_kmeans = kmeans.predict(X)
+
+    group_id = pd.Series(y_kmeans)
+    test = test.reset_index(drop = True)
+    test['group_id'] = group_id
+
+    groups = test.groupby(['group_id'])
+    
+    test1 = gpd.GeoDataFrame(test)
+    
+    test1 = test1.dissolve(by = 'group_id')
+    test1.geometry = test1.geometry.centroid
+    test1['X_to_new'] = test1.geometry.x
+    test1['Y_to_new'] = test1.geometry.y
+
+#     for i, gr in groups:
+#         w = center(gr.X_to, gr.Y_to, gr.text_sum)
+#         X_to_new.append(w[0])
+#         Y_to_new.append(w[1]) 
+
+#     test1['X_to_new'] = X_to_new
+#     test1['Y_to_new'] = Y_to_new
+    test1['text_sum_new'] = list(test.groupby(['group_id'])['text_sum'].sum())
+    test1['size_sum_new'] = list(test.groupby(['group_id'])['size_sum'].sum())
+
+    new_data_text1 = dict()
+    new_data_text1['x'] = list(test1['X_to_new'])
+    new_data_text1['y'] = list(test1['Y_to_new'])
+    new_data_text1['text'] = list(round(test1['text_sum_new'],2))
+
+    new_data1 = dict()
+    new_data1['x'] = list(test1['X_to_new'])
+    new_data1['y'] = list(test1['Y_to_new'])
+    new_data1['size'] = [x/3 for x in new_data_text1['text']]
+    new_data1['fill_color'] = [color]*len(test1)
+        
+    return new_data1, new_data_text1
+
+
+# In[45]:
+
+
+def cluster_from(test, X, n, color):
+    
+    X_to_from = []
+    Y_to_from = []
+    
+    kmeans = KMeans(n_clusters=int(np.ceil(len(test)/n)))
+    kmeans.fit(X)
+    y_kmeans = kmeans.predict(X)
+
+    group_id = pd.Series(y_kmeans)
+    test = test.reset_index(drop = True)
+    test['group_id'] = group_id
+
+    groups = test.groupby(['group_id'])
+    
+    test1 = gpd.GeoDataFrame(test)
+    
+    test1 = test1.dissolve(by = 'group_id')
+    test1.geometry = test1.geometry.centroid
+    test1['X_from_new'] = test1.geometry.x
+    test1['Y_from_new'] = test1.geometry.y
+
+#     for i, gr in groups:
+#         w = center(gr.X_to, gr.Y_to, gr.text_sum)
+#         X_to_new.append(w[0])
+#         Y_to_new.append(w[1]) 
+
+#     test1['X_to_new'] = X_to_new
+#     test1['Y_to_new'] = Y_to_new
+    test1['text_sum_new'] = list(test.groupby(['group_id'])['text_sum'].sum())
+    test1['size_sum_new'] = list(test.groupby(['group_id'])['size_sum'].sum())
+
+    new_data_text1 = dict()
+    new_data_text1['x'] = list(test1['X_from_new'])
+    new_data_text1['y'] = list(test1['Y_from_new'])
+    new_data_text1['text'] = list(round(test1['text_sum_new'],2))
+
+    new_data1 = dict()
+    new_data1['x'] = list(test1['X_from_new'])
+    new_data1['y'] = list(test1['Y_from_new'])
+    new_data1['size'] = [x/3 for x in new_data_text1['text']]
+    new_data1['fill_color'] = [color]*len(test1)
+        
+    return new_data1, new_data_text1
+
+
+# In[46]:
+
+
+def clear():
+    new_data_text1 = dict()
+    new_data_text1['x'] = []
+    new_data_text1['y'] = []
+    new_data_text1['text'] = []
+
+    new_data1 = dict()
+    new_data1['x'] = []
+    new_data1['y'] = []
+    new_data1['size'] = []
+    new_data1['fill_color'] = []
+    
+    return new_data1, new_data_text1
+
+
+# In[47]:
 
 
 def update_selection_to(idx_to):
@@ -422,99 +651,95 @@ def update_selection_to(idx_to):
 def update_selection_from(idx2):
     source_from.selected.update(indices=idx2)      
 
-def callback(attrname, old, new):
+def callback(attrname, old, new): 
 
     but = button1.active
-    val = slider1.value
-    
-    idx = source_from.selected.indices
-
-    print("Indices of selected circles from: ", idx)
-    print("Length of selected circles from: ", len(idx))
-
-    #таблица с выбранными индексами 
-    df = pd.DataFrame(data=ds.data).iloc[idx]
-    #сумма movements по выделенным индексам
-    df['size_sum'] = df.groupby(['X_to','Y_to'])['size'].transform(sum)
-    df['text_sum'] = df.groupby(['X_to','Y_to'])['text'].transform(sum)
-
-    p_to = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
-    p_to.add_tile(tile_provider)
-    
-    
-    lb_to = p_to.circle(x = 'X_to',
-         y = 'Y_to',
-         source=source_lb_to,
-        size=8,
-        fill_color = 'lightgray',
-        fill_alpha = 0.5,
-        line_color = 'lightgray',
-        line_alpha = 0.5,
-        name = "label",
-        nonselection_fill_color = 'lightgray',
-        nonselection_fill_alpha = 0.5,
-        nonselection_line_color = 'lightgray',
-        nonselection_line_alpha = 0.5 )
-    
-    
-    t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='papayawhip', fill_alpha = 1, 
-                            line_color='tan', line_alpha = 1, size=6 , source = source_to,
-                           nonselection_fill_alpha = 1, nonselection_fill_color = 'papayawhip', 
-                            nonselection_line_color='tan', nonselection_line_alpha = 1)
-    
-
-    test = df.drop_duplicates(['X_to','Y_to'])
-    
-    test = test[(test['text_sum'] >= val[0]) & (test['text_sum'] <= val[1])]
-    
-    print(test)
     
     if but == 0:
         
+        print(but)      
+    
+        idx = source_from.selected.indices
+        
+        if not idx:
+            previous_idx_to([])
+        else:
+            previous_idx_to(idx)
+
+        #таблица с выбранными индексами 
+        df = pd.DataFrame(data=ds.data).iloc[idx]
+
+        #сумма movements по выделенным индексам
+        df['size_sum'] = df.groupby(['X_to','Y_to'])['size'].transform(sum)
+        df['text_sum'] = df.groupby(['X_to','Y_to'])['text'].transform(sum)
+
+        x1 = p_to.x_range.start
+        x2 = p_to.x_range.end
+        y1 = p_to.y_range.start
+        y2 = p_to.y_range.end
+
+        d = ((x2-x1)**2 + (y2-y1)**2)**0.5 
+        print('d = ', d)
+
+        test = df.drop_duplicates(['X_to','Y_to'])
+
         stats.text = " "
 
-        if not idx: #если пустое выделение
+        previous_to(d)
 
-            layout1.children[1] = p_to #обновить график справа
+        new_data1 = dict()
+        new_data_text1 = dict() 
 
-        else: #если не пустое выделение
-            
-            new_data_text = dict()
-            new_data_text['text'] = list(round(test['text_sum'],2))
-            
-            print(new_data_text)
-            
-            new_data = dict()
-            new_data['x'] = list(test['X_to'])
-            new_data['y'] = list(test['Y_to'])
-            new_data['size'] = [x/2 for x in new_data_text['text']]
-            
-            p_to.circle(x=new_data['x'], y=new_data['y'], size=new_data['size'], fill_color='orange', fill_alpha = 0.6, 
-                                line_color='red', line_alpha = 0.8)
-            
-            p_to.text(x=new_data['x'], y=new_data['y'], text_color='black', text =new_data_text['text'], text_font_size='8pt',
-                          text_font_style = 'bold')
-        
-            
-#             t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-#                                 line_color='red', line_alpha = 0.8, size=[] )
-#             tds_to = t_to.data_source
-#             tds_to.data = new_data
-    
-#             l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-#                          text_font_style = 'bold')
-#             lds=l.data_source
-#             lds.data = new_data_text
+        test = gpd.GeoDataFrame(test, geometry=[Point(xy) for xy in zip(test.X_to, test.Y_to)])
 
-            layout1.children[1] = p_to #обновить график справа        
-                                      
-                
-    else:
-        
-        layout1.children[1] = p_to #обновить график справа
-        
+        X = test[['X_to', 'Y_to']].values
 
-source_from.selected.on_change('indices', callback) 
+
+        if (zoom_groups(dd_to[-1]) == 0) | ((zoom_groups(dd_to[-1]) == 1) & (zoom_groups(dd_to[-2]) != 
+                        zoom_groups(dd_to[-1]))) | ((zoom_groups(dd_to[-1]) == 1) & (index_to[-1] != 
+                        index_to[-2])) | (index_to[-1] == []):
+  
+            try:
+                new_data1, new_data_text1 = cluster_to(test, X, 6, 'red')
+            except:
+                new_data1, new_data_text1 = clear()
+            
+
+
+        elif ((zoom_groups(dd_to[-1]) == 2) & (zoom_groups(dd_to[-2]) != zoom_groups(dd_to[-1])))  | ((zoom_groups(dd_to[-1]) == 
+                    2) & (index_to[-1] != index_to[-2])) | (index_to[-1] == []):
+
+            try:                
+                new_data1, new_data_text1 = cluster_to(test, X, 2, 'blue')                
+            except:               
+                new_data1, new_data_text1 = clear()
+
+        elif ((zoom_groups(dd_to[-1]) == 3) & (zoom_groups(dd_to[-2]) != zoom_groups(dd_to[-1])))  | ((zoom_groups(dd_to[-1]) == 
+                            3) & (index_to[-1] != index_to[-2])) | (index_to[-1] == []):
+
+            test1 = test
+
+            new_data_text1 = dict()
+            new_data_text1['x'] = list(test1['X_to'])
+            new_data_text1['y'] = list(test1['Y_to'])
+            new_data_text1['text'] = list(round(test1['text_sum'],2))
+
+            new_data1 = dict()
+            new_data1['x'] = list(test1['X_to'])
+            new_data1['y'] = list(test1['Y_to'])
+            new_data1['size'] = [x/3 for x in new_data_text1['text']]
+            new_data1['fill_color'] = ['orange']*len(test1)
+
+        if new_data1:
+
+            tds_to.data = new_data1
+            lds.data = new_data_text1
+            print('dict 1 ')
+
+
+source_from.selected.on_change('indices', callback)
+button1.on_change('active', callback)  
+p_to.x_range.on_change('start', callback)  
 
 
 # In[ ]:
@@ -523,115 +748,98 @@ source_from.selected.on_change('indices', callback)
 
 
 
-# In[ ]:
+# In[48]:
 
 
 def callback2(attrname, old, new):
     
     but = button2.active
-    val = slider2.value
-    
-    idx = source_to2.selected.indices
-    
-    print("Indices of selected circles: ", idx)
-    print("Lenght of selected circles: ", len(idx))
-
-    #таблица с выбранными индексами 
-    df = pd.DataFrame(data=ds2.data).iloc[idx]
-    
-    #сумма movements по выделенным индексам
-    aa = df.groupby(['X_from','Y_from'])['size'].transform(sum)
-    aat = df.groupby(['X_from','Y_from'])['text'].transform(sum)
-    df['size_sum'] = aa
-    df['text_sum'] = aat
-
-    p_from = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
-    p_from.add_tile(tile_provider)
-    
-    lb_from = p_from.circle(x = 'X_from',
-         y = 'Y_from',
-         source=source_lb_from,
-        size=8,
-        fill_color = 'lightgray',
-        fill_alpha = 0.5,
-        line_color = 'lightgray',
-        line_alpha = 0.5,
-        name = "label",
-        nonselection_fill_color = 'lightgray',
-        nonselection_fill_alpha = 0.5,
-        nonselection_line_color = 'lightgray',
-        nonselection_line_alpha = 0.5 )
-    
-    t2 = p_from.circle(x = 'X_from', y = 'Y_from', fill_color='papayawhip', fill_alpha = 1, 
-                            line_color='tan', line_alpha = 1, size=6 , source = source_from2,
-                           nonselection_fill_alpha = 1, nonselection_fill_color = 'papayawhip', 
-                            nonselection_line_color='tan', nonselection_line_alpha = 1)
-
-    test = df.drop_duplicates(['X_from','Y_from'])
-    
-    test = test[(test['text_sum'] >= val[0]) & (test['text_sum'] <= val[1])]
-      
     
     if but == 0:
+   
+        idx = source_to2.selected.indices
+        print(idx)
         
+        if not idx:
+            previous_idx_from([])
+        else:
+            previous_idx_from(idx)
+
+        #таблица с выбранными индексами 
+        df = pd.DataFrame(data=ds2.data).iloc[idx]
+
+        #сумма movements по выделенным индексам
+        df['size_sum'] = df.groupby(['X_from','Y_from'])['size'].transform(sum)
+        df['text_sum'] = df.groupby(['X_from','Y_from'])['text'].transform(sum)
+        
+        x1 = p_from.x_range.start
+        x2 = p_from.x_range.end
+        y1 = p_from.y_range.start
+        y2 = p_from.y_range.end
+
+        d = ((x2-x1)**2 + (y2-y1)**2)**0.5 
+        print('d = ', d)
+
+        test = df.drop_duplicates(['X_from','Y_from'])
+
         stats2.text = " "
-
-        if not idx: #если пустое выделение
-
-            layout2.children[1] = p_from #обновить график справа
-
-        else: #если не пустое выделение
-            
-            new_data_text = dict()
-            new_data_text['text'] = list(round(test['text_sum'],2))
-            
-            print(new_data_text)
-            
-            new_data = dict()
-            new_data['x'] = list(test['X_to'])
-            new_data['y'] = list(test['Y_to'])
-            new_data['size'] = [x/2 for x in new_data_text['text']]
-            
-            p_to.circle(x=new_data['x'], y=new_data['y'], size=new_data['size'], fill_color='orange', fill_alpha = 0.6, 
-                                line_color='red', line_alpha = 0.8)
-            
-            p_to.text(x=new_data['x'], y=new_data['y'], text_color='black', text =new_data_text['text'], text_font_size='8pt',
-                          text_font_style = 'bold')
-                
-#             new_data = dict()
-#             new_data_text = dict()
-            
-#             new_data_text['x'] = list(test['X_from'])
-#             new_data_text['y'] = list(test['Y_from'])
-#             new_data_text['text'] = list(round(test['text_sum'],2))
-
-#             new_data['x'] = list(test['X_from'])
-#             new_data['y'] = list(test['Y_from'])
-#             new_data['size'] = [x/1.5 for x in new_data_text['text']]
-
-
-#             t_from = p_from.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-#                             line_color='red', line_alpha = 0.8, size=[] )
-#             tds2=t_from.data_source
-#             tds2.data = new_data
-
-
-#             l2 = p_from.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-#                          text_font_style = 'bold')
-#             lds2=l2.data_source
-#             lds2.data = new_data_text
-
-            layout2.children[1] = p_from #обновить график справа
-                
-    else:
         
-        layout2.children[1] = p_from #обновить график справа
+        previous_from(d)
+
+        new_data1 = dict()
+        new_data_text1 = dict() 
+
+        test = gpd.GeoDataFrame(test, geometry=[Point(xy) for xy in zip(test.X_from, test.Y_from)])
+        
+        X = test[['X_from', 'Y_from']].values
+        
+        if (zoom_groups(dd_from[-1]) == 0) | ((zoom_groups(dd_from[-1]) == 1) & (zoom_groups(dd_from[-2]) != 
+                        zoom_groups(dd_from[-1]))) | ((zoom_groups(dd_from[-1]) == 1) & (index_from[-1] != 
+                        index_from[-2])) | (index_from[-1] == []):
+  
+            try:
+                new_data1, new_data_text1 = cluster_from(test, X, 6, 'red')
+            except:
+                new_data1, new_data_text1 = clear()
+
+
+        elif ((zoom_groups(dd_from[-1]) == 2) & (zoom_groups(dd_from[-2]) != zoom_groups(dd_from[-1])))  | ((zoom_groups(dd_from[-1]) == 
+                    2) & (index_from[-1] != index_from[-2])) | (index_from[-1] == []):
+
+            try:                
+                new_data1, new_data_text1 = cluster_from(test, X, 2, 'blue')                
+            except:               
+                new_data1, new_data_text1 = clear()
+
+        elif ((zoom_groups(dd_from[-1]) == 3) & (zoom_groups(dd_from[-2]) != zoom_groups(dd_from[-1])))  | ((zoom_groups(dd_from[-1]) == 
+                            3) & (index_from[-1] != index_from[-2])) | (index_from[-1] == []):
+
+            test1 = test
+
+            new_data_text1 = dict()
+            new_data_text1['x'] = list(test1['X_from'])
+            new_data_text1['y'] = list(test1['Y_from'])
+            new_data_text1['text'] = list(round(test1['text_sum'],2))
+
+            new_data1 = dict()
+            new_data1['x'] = list(test1['X_from'])
+            new_data1['y'] = list(test1['Y_from'])
+            new_data1['size'] = [x/3 for x in new_data_text1['text']]
+            new_data1['fill_color'] = ['orange']*len(test1)
+
+        if new_data1:
+
+            tds_from.data = new_data1
+            lds_from.data = new_data_text1
+            print('dict 1 ')
 
 
 source_to2.selected.on_change('indices', callback2)
+button2.on_change('active', callback2)  
+p_from.x_range.on_change('start', callback2)  
 
 
-# In[ ]:
+# In[49]:
 
 
 def callback_to(attrname, old, new):
@@ -716,7 +924,7 @@ def callback_to(attrname, old, new):
 source_to.selected.on_change('indices', callback_to)
 
 
-# In[ ]:
+# In[50]:
 
 
 def update_selection_from2(idx2):
@@ -803,35 +1011,33 @@ def callback_to2(attrname, old, new):
 source_from2.selected.on_change('indices', callback_to2)
 
 
-# In[ ]:
+# In[51]:
 
 
-slider1.on_change('value', callback)
-slider2.on_change('value', callback2)
+# slider1.on_change('value', callback)
+# slider2.on_change('value', callback2)
 
 
-# In[ ]:
+# In[52]:
 
 
 layout1 = layout.row(p,p_to)
 layout2 = layout.row(p2, p_from)
-layout3 = layout.column(slider1, stats)
-layout4 = layout.column(slider2, stats2)
-layout5 = layout.column(select1, checkbox_group1, button1)
-layout6 = layout.column(select2, checkbox_group2, button2)
+layout3 = layout.column(select1, text_okrug, checkbox_group1, text_func, button1, slider1, stats)
+layout4 = layout.column(select2, text_okrug, checkbox_group2, text_func, button2, slider2, stats2)
 
-layout7 = layout.row(layout1, layout3, layout5)
-layout8 = layout.row(layout2, layout4, layout6)
+layout5 = layout.row(layout1, layout3)
+layout6 = layout.row(layout2, layout4)
 
 
 # Create Tabs
-box = layout.column(layout7, layout8)
+box = layout.column(layout5, layout6)
 
 
 curdoc().add_root(box)
 
 
-# In[ ]:
+# In[53]:
 
 
 # apps = {'/': Application(FunctionHandler(make_document))}
@@ -856,217 +1062,6 @@ curdoc().add_root(box)
 
 
 
-
-
-# In[ ]:
-
-
-# def update_selection_to(idx_to):
-#     source_to.selected.update(indices=idx_to) 
-
-# def update_selection_from(idx2):
-#     source_from.selected.update(indices=idx2)  
-    
-# def null_selection_to():
-#     source_to.selected.update(indices=[]) 
-
-# def null_selection_from():
-#     source_from.selected.update(indices=[]) 
-    
-
-# def callback(attrname, old, new):
-    
-#     but = button1.active
-#     val = slider1.value
-#     print(but)
-#     print(val)
-    
-#     if but == 0:
-        
-#         print('ноль')
-        
-#         null_selection_from()
-        
-#         def call1(attrname, old, new):
-
-#             idx = source_from.selected.indices
-
-#             print("Indices of selected circles from: ", idx)
-
-#             #таблица с выбранными индексами 
-#             df = pd.DataFrame(data=ds.data).iloc[idx]
-#             #сумма movements по выделенным индексам
-#             aa = df.groupby(['X_to','Y_to'])['size'].transform(sum)
-#             aat = df.groupby(['X_to','Y_to'])['text'].transform(sum)
-#             df['size_sum'] = aa
-#             df['text_sum'] = aat
-
-
-#             p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
-#                           y_range=(7521739.63348639197647572,  7533621.55124872922897339),
-#                           x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
-#             p_to.add_tile(tile_provider)
-
-
-#             lb_to = p_to.circle(x = 'X_to',
-#                  y = 'Y_to',
-#                  source=source_lb_to,
-#                 size=8,
-#                 fill_color = 'lightgray',
-#                 fill_alpha = 0.5,
-#                 line_color = 'lightgray',
-#                 line_alpha = 0.5,
-#                 name = "label",
-#                 nonselection_fill_color = 'lightgray',
-#                 nonselection_fill_alpha = 0.5,
-#                 nonselection_line_color = 'lightgray',
-#                 nonselection_line_alpha = 0.5 )
-
-
-#             t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 1, 
-#                                     line_color='red', line_alpha = 1, size=6 , source = source_to,
-#                                    nonselection_fill_alpha = 1, nonselection_fill_color = 'red', 
-#                                     nonselection_line_color='red', nonselection_line_alpha = 1)
-
-
-#             test = df.drop_duplicates(['X_to','Y_to'])
-
-#             test = test[(test['text_sum'] >= val[0]) & (test['text_sum'] <= val[1])]
-
-#             print(test)
-
-
-#             stats.text = " "
-
-#             if not idx: #если пустое выделение
-
-#                 layout1.children[1] = p_to #обновить график справа
-
-#             else: #если не пустое выделение
-
-#                 new_data = dict()
-#                 new_data['x'] = list(test['X_to'])
-#                 new_data['y'] = list(test['Y_to'])
-#                 new_data['size'] = list(test['size_sum'])
-
-#                 new_data_text = dict()
-#                 new_data_text['x'] = list(test['X_to'])
-#                 new_data_text['y'] = list(test['Y_to'])
-#                 new_data_text['text'] = list(test['text_sum'])
-
-#                 t_to = p_to.circle(x = [], y = [], fill_color='orange', fill_alpha = 0.6, 
-#                                     line_color='red', line_alpha = 0.8, size=[] )
-#                 tds_to=t_to.data_source
-#                 tds_to.data = new_data
-
-#                 l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt',
-#                              text_font_style = 'bold')
-#                 lds=l.data_source
-#                 lds.data = new_data_text
-
-#                 layout1.children[1] = p_to #обновить график справа 
-                
-#         source_from.selected.on_change('indices', call1)
-
-                                      
-                
-#     else:
-        
-#         print('один')
-        
-#         null_selection_from()
-#         null_selection_to()
-        
-#         def call2(attrname1, old1, new1):
-
-#             idx_to = source_to.selected.indices
-#             idx2 = source_from.selected.indices
-
-#             null_selection_from()
-
-#             inters_idx = list(set(idx2) & set(idx_to))
-
-#             print("Length of selected circles idx: ", idx2)
-#             print("Length of selected circles idx_to: ", idx_to)
-#             print("Length of selected circles inters_idx: ", inters_idx)
-
-#             #таблица с выбранными индексами 
-#             dff = pd.DataFrame(data=tds.data).loc[inters_idx]
-#             print("Length of selected circles to: ", dff)
-
-
-#             p_to = figure(x_range=(4157975.01546188769862056 , 4173827.06850233720615506), 
-#                           y_range=(7521739.63348639197647572,  7533621.55124872922897339),
-#                           x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
-#             p_to.add_tile(tile_provider)
-
-
-#             lb_to = p_to.circle(x = 'X_to',
-#              y = 'Y_to',
-#              source=source_lb_to,
-#             size=8,
-#             fill_color = 'lightgray',
-#             fill_alpha = 0.5,
-#             line_color = 'lightgray',
-#             line_alpha = 0.5,
-#             name = "label",
-#             nonselection_fill_color = 'lightgray',
-#             nonselection_fill_alpha = 0.5,
-#             nonselection_line_color = 'lightgray',
-#             nonselection_line_alpha = 0.5 )
-
-
-#             t = p_to.circle(x = 'X_to', y = 'Y_to', fill_color='red', fill_alpha = 1, 
-#                                     line_color='red', line_alpha = 1, size=6 , source = source_to,
-#                            nonselection_fill_alpha = 1, nonselection_fill_color = 'red', 
-#                                         nonselection_line_color='red', nonselection_line_alpha = 1)
-
-
-#             test = dff.drop_duplicates(['X_to','Y_to'])
-
-#             #сумма movements по выделенным индексам
-#             aaa = dff['text'].sum()
-#             print("size to: ", aaa)
-
-#             #сайты из
-#             sitesfrom = dff['sitesfrom'].drop_duplicates()
-#             sitesto = dff['sitesto'].drop_duplicates()
-
-#             if not inters_idx:
-
-#                 stats.text = "Никто не едет"
-#                 layout1.children[1] = p_to #обновить график справа         
-
-#             else:
-
-#                 new_data = dict()
-#                 new_data['x'] = list(test['X_to'])
-#                 new_data['y'] = list(test['Y_to'])
-
-#                 t_to = p_to.circle(x = [], y = [], fill_color='red', fill_alpha = 0.5, 
-#                                 line_color='red', line_alpha = 0.8, size=15)
-#                 tds_to=t_to.data_source
-#                 tds_to.data = new_data
-
-#                 layout1.children[1] = p_to #обновить график справа
-#                 print(aaa)
-#                 print(type(aaa))
-
-#                 stats.text = "Из сайтов " + str(list(sitesfrom)) + " в сайты " + str(list(sitesto)) + " едет " + str(aaa) + " человек(а) в час"
-                
-#         source_to.selected.on_change('indices', call2)
-        
-        
-# # #         null_selection_to()
-# # #         null_selection_from()
-# # #         layout1.children[1] = p_to #обновить график справа
-
-
-        
-
-# # source_from.selected.on_change('indices', callback)
-# # source_to.selected.on_change('indices', callback)
-# button1.on_change('active', callback)
 
 
 # In[ ]:
