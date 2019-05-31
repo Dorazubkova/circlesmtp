@@ -5,5 +5,3 @@ scikit-learn==0.21.2
 shapely==1.6.4.post2
 geopandas==0.4.0
 numpy==1.16.2
-os==3.1
-sys
