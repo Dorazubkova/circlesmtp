@@ -254,7 +254,7 @@ l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt'
 tds_to = t_to.data_source
 lds=l.data_source
 
-p2 = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from2)
+p2 = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from2)
 p2.add_tile(tile_provider)
 
 # p2.add_layout(Title(text='Фильтр корреспонденций "В"', text_font_size='10pt', text_color = 'purple'), 'above')
@@ -284,7 +284,7 @@ r2 = p2.circle(x = 'X_to',
         nonselection_fill_color='gray')
 
 
-p_from = figure(x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
+p_from = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
 p_from.add_tile(tile_provider)
 
 Time_Title2 = Title(text='Матрица: ', text_font_size='10pt', text_color = 'grey')
