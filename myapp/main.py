@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[74]:
+# ## 1. Импорт библиотек
+
+# In[1]:
 
 
 import bokeh
@@ -10,10 +12,9 @@ from bokeh.io import show, output_notebook
 from bokeh.plotting import figure, show, output_notebook
 from bokeh.tile_providers import Vendors, get_provider
 import pandas as pd
-import os
-import sys
 import numpy as np
 from bokeh.models import ColumnDataSource, HoverTool, LassoSelectTool, Label, Title, ZoomInTool, ZoomOutTool
+from bokeh.models import Arrow, OpenHead, NormalHead, VeeHead
 from bokeh.layouts import gridplot
 from bokeh.io import curdoc
 from bokeh.layouts import column, row
@@ -29,16 +30,20 @@ from sklearn.cluster import KMeans
 import shapely 
 from shapely.geometry import Point
 import geopandas as gpd
-output_notebook()
-
-
-# In[75]:
-
-
 tile_provider = get_provider(Vendors.CARTODBPOSITRON)
 
 
-# In[76]:
+# In[2]:
+
+
+tile_provider
+
+
+# ## 2. Чтение данных
+
+# ### 2.1 Onoffmatrix
+
+# In[3]:
 
 
 onoffmatrix = pd.read_csv('myapp/onoffmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -73,13 +78,9 @@ onoffmatrix_7 = onoffmatrix[onoffmatrix['hour_on'] == 7]
 onoffmatrix_8 = onoffmatrix[onoffmatrix['hour_on'] == 8]
 
 
-# In[ ]:
+# ### 2.2 Odmatrix
 
-
-
-
-
-# In[77]:
+# In[4]:
 
 
 odmatrix = pd.read_csv('myapp/odmatrix_avg.csv', sep = ';', encoding='cp1251')
@@ -109,25 +110,38 @@ odmatrix_7 = odmatrix[odmatrix['hour_on'] == 7]
 odmatrix_8 = odmatrix[odmatrix['hour_on'] == 8]
 
 
-# In[78]:
+# In[5]:
 
 
+onoffmatrix_7[onoffmatrix_7['super_site_from'] == 294]['movements_norm'].sum()
+
+
+# ### 2.3 Округа
+
+# In[6]:
+
+
+#соответствие округов и супер сайтов
 supers_okrugs = pd.read_csv('myapp/supers_okrugs.csv', sep = ';', encoding='cp1251')
 supers_okrugs = supers_okrugs.sort_values(['name_okrug'])
 supers_okrugs['id'] = supers_okrugs.groupby(['name_okrug']).ngroup()
 
-
-# In[79]:
-
-
+#названия округов
 okrugs_names = list(supers_okrugs['name_okrug'].sort_values().drop_duplicates())
 
-
-# In[80]:
-
-
+#названия супер сайтов
 supers_names = pd.read_csv('myapp/supers_names.csv', sep = ';', encoding='cp1251')
 supers_labels = pd.merge(supers_Moscow, supers_names, how = 'inner', on = ['super_site'])
+
+
+# ## 3. Добавление карт, слоев и штучек
+
+# ### 3.1 Создаем ColumnDataSourse
+
+# #### 3.1.1 DataSourse для подписей
+
+# In[7]:
+
 
 cds_lb_from = dict(X_from=list(supers_labels['X'].values), 
                     Y_from=list(supers_labels['Y'].values),
@@ -144,9 +158,12 @@ cds_lb_to = dict(X_to=list(supers_labels['X'].values),
 source_lb_to = ColumnDataSource(data = cds_lb_to)
 
 
-# In[81]:
+# #### 3.1.2 DataSourse для матриц
+
+# In[8]:
 
 
+#пустой sourse, в который при выборе матрицы и округа запишутся данные
 cds = dict(
                         X_from=[], 
                         Y_from=[],
@@ -165,10 +182,17 @@ source_from2 = ColumnDataSource(data = cds)
 
 source_to2 = ColumnDataSource(data = cds)
 
+source_links_from = ColumnDataSource(data = cds)
 
-# In[82]:
+source_links_to = ColumnDataSource(data = cds)
 
 
+# ### 3.2 Создаем инструменты
+
+# In[9]:
+
+
+#инструменты
 lasso_from = LassoSelectTool(select_every_mousemove=False)
 lasso_to = LassoSelectTool(select_every_mousemove=False)
 
@@ -183,13 +207,25 @@ toolList_to = [lasso_to,  'reset',  'pan', 'wheel_zoom', hover]
 toolList_from2 = [lasso_from2, 'reset', 'pan','wheel_zoom', hover]
 toolList_to2 = [lasso_to2,  'reset',  'pan','wheel_zoom', hover]
 
+toolList_links = [lasso_to2,  'reset',  'pan','wheel_zoom', hover]
 
+
+# ### 3.3 Рисуем MAP
+
+# #### 3.3.1 График матрицы "ИЗ"
+
+# ##### 3.3.1.1 График from
+
+# In[10]:
+
+
+#рисуем графики
 p = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from)
 p.add_tile(tile_provider)
-
-
 # p.add_layout(Title(text='Фильтр корреспонденций "ИЗ"', text_font_size='10pt', text_color = 'blue'), 'above')
 
+
+#слой подписей
 lb = p.circle(x = 'X_from',
          y = 'Y_from',
          source=source_lb_from,
@@ -204,6 +240,7 @@ lb = p.circle(x = 'X_from',
         nonselection_line_color = 'lightgray',
         nonselection_line_alpha = 0.5 )
 
+#слой сайтов from
 r = p.circle(x = 'X_from',
          y = 'Y_from',
          source=source_from,
@@ -213,12 +250,17 @@ r = p.circle(x = 'X_from',
         nonselection_fill_alpha=1,
         nonselection_fill_color='gray')
 
-p_to = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
-p_to.add_tile(tile_provider)
-
 Time_Title1 = Title(text='Матрица: ', text_font_size='10pt', text_color = 'grey')
 p.add_layout(Time_Title1, 'above')
 
+
+# ##### 3.3.1.2 График to
+
+# In[11]:
+
+
+p_to = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to)
+p_to.add_tile(tile_provider)
 
 lb_to = p_to.circle(x = 'X_to',
          y = 'Y_to',
@@ -254,6 +296,14 @@ l = p_to.text(x = [], y = [], text_color='black', text =[], text_font_size='8pt'
 tds_to = t_to.data_source
 lds=l.data_source
 
+
+# #### 3.3.2 График матрицы "В"
+
+# ##### 3.3.2.1 График to
+
+# In[12]:
+
+
 p2 = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_from2)
 p2.add_tile(tile_provider)
 
@@ -283,13 +333,17 @@ r2 = p2.circle(x = 'X_to',
         nonselection_fill_alpha=1,
         nonselection_fill_color='gray')
 
-
-p_from = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
-p_from.add_tile(tile_provider)
-
 Time_Title2 = Title(text='Матрица: ', text_font_size='10pt', text_color = 'grey')
 p2.add_layout(Time_Title2, 'above')
 
+
+# ##### 3.3.2.2 График from
+
+# In[13]:
+
+
+p_from = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator", tools=toolList_to2)
+p_from.add_tile(tile_provider)
 
 lb_from = p_from.circle(x = 'X_to',
          y = 'Y_to',
@@ -323,7 +377,49 @@ ds2 = r2.data_source
 tds2 = t2.data_source
 
 
-# In[83]:
+# #### 3.3.3 Топ связи
+
+# In[14]:
+
+
+map_links = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator")
+map_links.add_tile(tile_provider)
+
+from_links = map_links.circle(x = 'X_from', y = 'Y_from', fill_color='papayawhip', fill_alpha = 0.6, 
+                    line_color='tan', line_alpha = 0.8, size=6 , source = source_links_from,
+                  nonselection_fill_alpha = 0.6, nonselection_fill_color = 'papayawhip', nonselection_line_color = None)
+
+to_links = map_links.circle(x = 'X_to', y = 'Y_to', fill_color='grey', fill_alpha = 0.6, 
+                    line_color='black', line_alpha = 0.8, size=6 , source = source_links_to,
+                  nonselection_fill_alpha = 0.6, nonselection_fill_color = 'grey', nonselection_line_color = None)
+
+# from_links_draw = map_links.circle(x = [], y = [], fill_color=[], fill_alpha = 0.6, 
+#                     line_color= None, line_alpha = 0.8, size=[], nonselection_line_color = None,
+#                    nonselection_fill_color = 'red') 
+
+# arrw_data = dict()
+# arrw_data['x_start'] = [3948598,3948700]
+# arrw_data['y_start'] = [7307581,7307700
+# arrw_data['x_end'] = [4354485,4354600]
+# arrw_data['y_end'] = [7725406,7725800]
+# arrw_data['line_color'] = [4354485,4354600]
+# arrw_data['line_width'] = [7725406,7725800]
+
+# arrw = Arrow()
+    
+# map_links.add_layout(arrw)
+
+
+Time_Title3 = Title(text='Матрица: ', text_font_size='10pt', text_color = 'grey')
+map_links.add_layout(Time_Title3, 'above')
+
+ds_from_links = from_links.data_source
+ds_to_links = to_links.data_source
+
+
+# ### 3.4 Widgets
+
+# In[16]:
 
 
 #widgets
@@ -335,15 +431,26 @@ select1 = Dropdown(label="1. ВЫБЕРИТЕ МАТРИЦУ:", menu = menu, but
 select2 = Dropdown(label="1. ВЫБЕРИТЕ МАТРИЦУ:", menu = menu, button_type  = 'danger')
 text_okrug = Paragraph(text='2. ВЫБЕРИТЕ ОКРУГ:', width=500, height=10, style={'color': 'white', 'background':'green'})
 text_func = Paragraph(text='3. ВЫБЕРИТЕ ДЕЙСТВИЕ:', width=500, height=10, style={'color': 'white', 'background':'steelblue'})
-button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
+button1 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], css_classes =['custom_button'])
 button2 = RadioButtonGroup(labels=['Нарисовать кружочки','Посмотреть корреспонденции'], button_type  = 'primary')
-slider1 = RangeSlider(start=0, end=1000, value=(50,1000), step=50, title="Сайты, с которых корреспонденции в диапазоне:", callback_policy="mouseup")
-slider2 = RangeSlider(start=0, end=1000, value=(50,1000), step=50, title="Сайты, с которых корреспонденции в диапазоне:")
+slider1 = RangeSlider(start=0, end=100000, value=(0,10000), step=50, title="Сайты, с которых корреспонденции в диапазоне:", callback_policy="mouseup")
+slider2 = RangeSlider(start=0, end=100000, value=(0,10000), step=50, title="Сайты, с которых корреспонденции в диапазоне:")
 checkbox_group1 = CheckboxGroup(labels=okrugs_names, active=[])
 checkbox_group2 = CheckboxGroup(labels=okrugs_names, active=[])
 
 
-# In[84]:
+select3 = Dropdown(label="1. ВЫБЕРИТЕ МАТРИЦУ:", menu = menu, button_type  = 'danger')
+text_okrug = Paragraph(text='2. ВЫБЕРИТЕ ОКРУГ:', width=500, height=10, style={'color': 'white', 'background':'green'})
+text_func = Paragraph(text='3. ВЫБЕРИТЕ ДЕЙСТВИЕ:', width=500, height=10, style={'color': 'white', 'background':'steelblue'})
+checkbox_group3 = CheckboxGroup(labels=okrugs_names, active=[])
+slider3 = Slider(start=0, end=50, value=0, step=5, title="Топ связей:")
+
+
+# ### 3.5 Вспомогательные функции
+
+# #### 3.5.1 Запись названий матрицы
+
+# In[17]:
 
 
 prev_matrix_from = ['matrix']
@@ -351,8 +458,20 @@ def previous_matrix_from(matrix):
     prev_matrix_from.append(matrix)
     return prev_matrix_from
 
+prev_matrix_to = ['matrix']
+def previous_matrix_to(matrix):
+    prev_matrix_to.append(matrix)
+    return prev_matrix_to
 
-# In[85]:
+prev_matrix_links = ['matrix']
+def previous_matrix_links(matrix):
+    prev_matrix_links.append(matrix)
+    return prev_matrix_links
+
+
+# #### 3.5.2 Запись названий округов
+
+# In[18]:
 
 
 prev_ok_from = ['okrug']
@@ -360,195 +479,26 @@ def previous_okrug_from(okrug):
     prev_ok_from.append(okrug)
     return prev_ok_from
 
-
-# In[86]:
-
-
-def update1(attrname, old, new):
-    
-    sl = select1.value
-    print(sl)
-    previous_matrix_from(sl)
-    
-    if prev_matrix_from[-1] != prev_matrix_from[-2]:
-        new_data1, new_data_text1 = clear()  
-        null_selection_from()
-        null_selection_to()
-        
-    else:     
-    
-        ok = checkbox_group1.active
-        previous_okrug_from(ok)
-        
-        if prev_ok_from[-1] != prev_ok_from[-2]:
-            new_data1, new_data_text1 = clear()  
-            null_selection_from()
-            null_selection_to()
-                                  
-        val = slider1.value
-
-        df = globals()[sl]
-
-        df1 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_from'], right_on = ['super_site'])
-        df1 = df1[df1['id'].isin(ok)]
-        df1['movements_from'] = df1.groupby(['super_site_from'])['movements_norm'].transform(sum)
-        df1 = df1[(df1['movements_from'] >= val[0]) & (df1['movements_from'] <= val[1])]
-
-        print(len(df1))
-
-        df2 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_to'], right_on = ['super_site'])
-        df2 = df2[df2['id'].isin(ok)]
-        #df2 = df2[(df2['movements_norm'] >= val[0]) & (df2['movements_norm'] <= val[1])]
-
-        cds_upd1 = dict(     X_from=list(df1['X_from'].values), 
-                            Y_from=list(df1['Y_from'].values),
-                            size=list(df1['movesize'].values),
-                            X_to=list(df1['X_to'].values), 
-                            Y_to=list(df1['Y_to'].values),
-                            sitesfrom=list(df1['super_site_from'].values),
-                            sitesto=list(df1['super_site_to'].values),
-                            text=list(df1['movements_norm'].values))
-
-        cds_upd2 = dict(     X_from=list(df2['X_from'].values), 
-                            Y_from=list(df2['Y_from'].values),
-                            size=list(df2['movesize'].values),
-                            X_to=list(df2['X_to'].values), 
-                            Y_to=list(df2['Y_to'].values),
-                            sitesfrom=list(df2['super_site_from'].values),
-                            sitesto=list(df2['super_site_to'].values),
-                            text=list(df2['movements_norm'].values))
-
-        #1
-        source_from_sl = ColumnDataSource(data = cds_upd1)
-        source_from.data = source_from_sl.data
-
-        #2
-        source_to_sl = ColumnDataSource(data = cds_upd1)
-        source_to.data = source_to_sl.data
-
-        Time_Title1.text = "Матрица: " + sl
-
-
-select1.on_change('value', update1)
-checkbox_group1.on_change('active', update1)
-
-
-# In[87]:
-
-
-prev_matrix_to = ['matrix']
-def previous_matrix_to(matrix):
-    prev_matrix_to.append(matrix)
-    return prev_matrix_to
-
-
-# In[88]:
-
-
 prev_ok_to = ['okrug']
 def previous_okrug_to(okrug):
     prev_ok_to.append(okrug)
     return prev_ok_to
 
-
-# In[89]:
-
-
-def update2(attrname, old, new):
-    
-    sl = select2.value
-    print(sl)
-    previous_matrix_to(sl)
-    
-    if prev_matrix_to[-1] != prev_matrix_to[-2]:
-        new_data1, new_data_text1 = clear()  
-        null_selection_from2()
-        null_selection_to2()
-        
-    else:     
-    
-        ok = checkbox_group2.active
-        previous_okrug_to(ok)
-        
-        if prev_ok_to[-1] != prev_ok_to[-2]:
-            new_data1, new_data_text1 = clear()  
-            null_selection_from2()
-            null_selection_to2()
-    
-        val = slider2.value
-        
-        df = globals()[sl]
-
-        df1 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_from'], right_on = ['super_site'])
-        df1 = df1[df1['id'].isin(ok)]
-        df1['movements_from'] = df1.groupby(['super_site_from'])['movements_norm'].transform(sum)
-        df1 = df1[(df1['movements_from'] >= val[0]) & (df1['movements_from'] <= val[1])]
-
-        print(len(df1))
-
-        df2 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_to'], right_on = ['super_site'])
-        df2 = df2[df2['id'].isin(ok)]
-
-        cds_upd1 = dict(     X_from=list(df1['X_from'].values), 
-                            Y_from=list(df1['Y_from'].values),
-                            size=list(df1['movesize'].values),
-                            X_to=list(df1['X_to'].values), 
-                            Y_to=list(df1['Y_to'].values),
-                            sitesfrom=list(df1['super_site_from'].values),
-                            sitesto=list(df1['super_site_to'].values),
-                            text=list(df1['movements_norm'].values))
-
-        cds_upd2 = dict(     X_from=list(df2['X_from'].values), 
-                            Y_from=list(df2['Y_from'].values),
-                            size=list(df2['movesize'].values),
-                            X_to=list(df2['X_to'].values), 
-                            Y_to=list(df2['Y_to'].values),
-                            sitesfrom=list(df2['super_site_from'].values),
-                            sitesto=list(df2['super_site_to'].values),
-                            text=list(df2['movements_norm'].values))
-        #3
-        source_from_sl2 = ColumnDataSource(data = cds_upd2)
-        source_from2.data = source_from_sl2.data
-
-        #4
-        source_to_sl2 = ColumnDataSource(data = cds_upd2)
-        source_to2.data = source_to_sl2.data
-
-        Time_Title2.text = "Матрица: " + sl
+prev_ok_links = ['okrug']
+def previous_okrug_links(okrug):
+    prev_ok_links.append(okrug)
+    return prev_ok_links
 
 
-select2.on_change('value', update2)
-checkbox_group2.on_change('active', update2)
+# #### 3.5.3 Запись значений zoom
 
-
-# In[90]:
-
-
-slider1.on_change('value', update1)
-slider2.on_change('value', update2)
-
-
-# In[91]:
-
-
-#             eps = 500
-#             min_samples = 0     
-   
-#             db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
-#             labels = db.labels_    
-
-
-# In[92]:
+# In[19]:
 
 
 dd_to = [600000]
 def previous_to(d):    
     dd_to.append(d)
-    return dd_to    
-
-
-# In[93]:
-
+    return dd_to 
 
 dd_from = [600000]
 def previous_from(d):    
@@ -556,7 +506,9 @@ def previous_from(d):
     return dd_from   
 
 
-# In[94]:
+# #### 3.5.4 Запись значений selected index
+
+# In[20]:
 
 
 index_to = [[0]]
@@ -564,17 +516,15 @@ def previous_idx_to(idx):
     index_to.append(idx)
     return index_to
 
-
-# In[95]:
-
-
 index_from = [[0]]
 def previous_idx_from(idx):
     index_from.append(idx)
     return index_from
 
 
-# In[96]:
+# #### 3.5.5 Запись значений button
+
+# In[21]:
 
 
 bttn = [2]
@@ -583,7 +533,9 @@ def previous_but(but):
     return bttn
 
 
-# In[97]:
+# #### 3.5.6 Определение уровня zoom
+
+# In[22]:
 
 
 def zoom_groups(x):
@@ -598,7 +550,9 @@ def zoom_groups(x):
     return group    
 
 
-# In[98]:
+# #### 3.5.7 Вычисление "центра масс"
+
+# In[23]:
 
 
 def center(x, y, mass):
@@ -610,7 +564,9 @@ def center(x, y, mass):
     return [xCentr, yCentr]
 
 
-# In[99]:
+# #### 3.5.8 Кластеризация координат
+
+# In[24]:
 
 
 def cluster_to(test, X, n, color):
@@ -659,8 +615,6 @@ def cluster_to(test, X, n, color):
     return new_data1, new_data_text1
 
 
-# In[100]:
-
 
 def cluster_from(test, X, n, color):
     
@@ -708,7 +662,9 @@ def cluster_from(test, X, n, color):
     return new_data1, new_data_text1
 
 
-# In[101]:
+# #### 3.5.9 Очистка ColumnDataSourse
+
+# In[25]:
 
 
 def clear():
@@ -726,7 +682,9 @@ def clear():
     return new_data1, new_data_text1
 
 
-# In[102]:
+# #### 3.5.10 Очистка selected index
+
+# In[26]:
 
 
 def null_selection_to():
@@ -734,11 +692,7 @@ def null_selection_to():
 
 def null_selection_from():
     source_from.selected.update(indices=[]) 
-
-
-# In[103]:
-
-
+    
 def null_selection_to2():
     source_to2.selected.update(indices=[]) 
 
@@ -746,7 +700,227 @@ def null_selection_from2():
     source_from2.selected.update(indices=[]) 
 
 
-# In[104]:
+# ### 3.6 CALLBACKS
+
+# #### 3.6.1 Добавление сайтов на карту при выборе матрицы и округа
+
+# In[27]:
+
+
+def update1(attrname, old, new):
+    
+    sl = select1.value
+    print(sl)
+    previous_matrix_from(sl)
+    
+    if prev_matrix_from[-1] != prev_matrix_from[-2]:
+        new_data1, new_data_text1 = clear()  
+        null_selection_from()
+        null_selection_to()
+        
+    else:     
+    
+        ok = checkbox_group1.active
+        previous_okrug_from(ok)
+        
+        if prev_ok_from[-1] != prev_ok_from[-2]:
+            new_data1, new_data_text1 = clear()  
+            null_selection_from()
+            null_selection_to()
+
+
+        df = globals()[sl]
+
+        df1 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_from'], right_on = ['super_site'])
+        df1 = df1[df1['id'].isin(ok)]
+
+        print(len(df1))
+
+        df2 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_to'], right_on = ['super_site'])
+        df2 = df2[df2['id'].isin(ok)]
+        #df2 = df2[(df2['movements_norm'] >= val[0]) & (df2['movements_norm'] <= val[1])]
+
+        cds_upd1 = dict(     X_from=list(df1['X_from'].values), 
+                            Y_from=list(df1['Y_from'].values),
+                            size=list(df1['movesize'].values),
+                            X_to=list(df1['X_to'].values), 
+                            Y_to=list(df1['Y_to'].values),
+                            sitesfrom=list(df1['super_site_from'].values),
+                            sitesto=list(df1['super_site_to'].values),
+                            text=list(df1['movements_norm'].values))
+
+        cds_upd2 = dict(     X_from=list(df2['X_from'].values), 
+                            Y_from=list(df2['Y_from'].values),
+                            size=list(df2['movesize'].values),
+                            X_to=list(df2['X_to'].values), 
+                            Y_to=list(df2['Y_to'].values),
+                            sitesfrom=list(df2['super_site_from'].values),
+                            sitesto=list(df2['super_site_to'].values),
+                            text=list(df2['movements_norm'].values))
+
+        #1
+        source_from_sl = ColumnDataSource(data = cds_upd1)
+        source_from.data = source_from_sl.data
+
+        #2
+        source_to_sl = ColumnDataSource(data = cds_upd1)
+        source_to.data = source_to_sl.data
+
+        Time_Title1.text = "Матрица: " + sl
+
+
+select1.on_change('value', update1)
+checkbox_group1.on_change('active', update1)
+
+
+# In[28]:
+
+
+def update2(attrname, old, new):
+    
+    sl = select2.value
+    print(sl)
+    previous_matrix_to(sl)
+    
+    if prev_matrix_to[-1] != prev_matrix_to[-2]:
+        new_data1, new_data_text1 = clear()  
+        null_selection_from2()
+        null_selection_to2()
+        
+    else:     
+    
+        ok = checkbox_group2.active
+        previous_okrug_to(ok)
+        
+        if prev_ok_to[-1] != prev_ok_to[-2]:
+            new_data1, new_data_text1 = clear()  
+            null_selection_from2()
+            null_selection_to2()
+
+        
+        df = globals()[sl]
+
+        df1 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_from'], right_on = ['super_site'])
+        df1 = df1[df1['id'].isin(ok)]
+
+        print(len(df1))
+
+        df2 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_to'], right_on = ['super_site'])
+        df2 = df2[df2['id'].isin(ok)]
+
+        cds_upd1 = dict(     X_from=list(df1['X_from'].values), 
+                            Y_from=list(df1['Y_from'].values),
+                            size=list(df1['movesize'].values),
+                            X_to=list(df1['X_to'].values), 
+                            Y_to=list(df1['Y_to'].values),
+                            sitesfrom=list(df1['super_site_from'].values),
+                            sitesto=list(df1['super_site_to'].values),
+                            text=list(df1['movements_norm'].values))
+
+        cds_upd2 = dict(     X_from=list(df2['X_from'].values), 
+                            Y_from=list(df2['Y_from'].values),
+                            size=list(df2['movesize'].values),
+                            X_to=list(df2['X_to'].values), 
+                            Y_to=list(df2['Y_to'].values),
+                            sitesfrom=list(df2['super_site_from'].values),
+                            sitesto=list(df2['super_site_to'].values),
+                            text=list(df2['movements_norm'].values))
+        #3
+        source_from_sl2 = ColumnDataSource(data = cds_upd2)
+        source_from2.data = source_from_sl2.data
+
+        #4
+        source_to_sl2 = ColumnDataSource(data = cds_upd2)
+        source_to2.data = source_to_sl2.data
+
+        Time_Title2.text = "Матрица: " + sl
+
+
+select2.on_change('value', update2)
+checkbox_group2.on_change('active', update2)
+
+
+# In[29]:
+
+
+def update3(attrname, old, new):
+    
+    sl = select3.value
+    print(sl)
+    previous_matrix_links(sl)
+    
+    if prev_matrix_links[-1] != prev_matrix_links[-2]:
+        new_data1, new_data_text1 = clear()  
+        
+    else:     
+    
+        ok = checkbox_group3.active
+        previous_okrug_links(ok)
+        
+        if prev_ok_links[-1] != prev_ok_links[-2]:
+            new_data1, new_data_text1 = clear()  
+            
+#         val = slider3.value
+        
+        df = globals()[sl]
+
+        df1 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_from'], right_on = ['super_site'])
+        df1 = df1[df1['id'].isin(ok)]
+#         df1 = df1.sort_values(['movements_norm'], ascending  = False)
+#         df1 = df1[:val]
+        
+        print(len(df1))
+
+        df2 = pd.merge(df, supers_okrugs, how = 'inner', left_on = ['super_site_to'], right_on = ['super_site'])
+        df2 = df2[df2['id'].isin(ok)]
+        
+        cds_upd1 = dict(     X_from=list(df1['X_from'].values), 
+                            Y_from=list(df1['Y_from'].values),
+                            size=list(df1['movesize'].values),
+                            X_to=list(df1['X_to'].values), 
+                            Y_to=list(df1['Y_to'].values),
+                            sitesfrom=list(df1['super_site_from'].values),
+                            sitesto=list(df1['super_site_to'].values),
+                            text=list(df1['movements_norm'].values))
+
+        cds_upd2 = dict(     X_from=list(df2['X_from'].values), 
+                            Y_from=list(df2['Y_from'].values),
+                            size=list(df2['movesize'].values),
+                            X_to=list(df2['X_to'].values), 
+                            Y_to=list(df2['Y_to'].values),
+                            sitesfrom=list(df2['super_site_from'].values),
+                            sitesto=list(df2['super_site_to'].values),
+                            text=list(df2['movements_norm'].values))
+        #5
+        source_links_from1 = ColumnDataSource(data = cds_upd1)
+        source_links_from.data = source_links_from1.data
+
+        #6
+        source_links_to1 = ColumnDataSource(data = cds_upd1)
+        source_links_to.data = source_links_to1.data
+
+        Time_Title3.text = "Матрица: " + sl
+
+
+select3.on_change('value', update3)
+checkbox_group3.on_change('active', update3)
+
+
+# In[31]:
+
+
+#             eps = 500
+#             min_samples = 0     
+   
+#             db = DBSCAN(eps=eps, min_samples=min_samples).fit(X)
+#             labels = db.labels_    
+
+
+# #### 3.6.2 Рисование кружков при выборе сайтов
+
+# ##### 3.6.2.1 Графики from
+
+# In[32]:
 
 
 def callback(attrname, old, new): 
@@ -850,13 +1024,9 @@ button1.on_change('active', callback)
 p_to.x_range.on_change('start', callback)  
 
 
-# In[ ]:
+# ##### 3.6.2.2 Графики to
 
-
-
-
-
-# In[105]:
+# In[33]:
 
 
 def callback2(attrname, old, new):
@@ -961,7 +1131,11 @@ button2.on_change('active', callback2)
 p_from.x_range.on_change('start', callback2)  
 
 
-# In[106]:
+# #### 3.6.3 Корреспонденции текстом
+
+# ##### 3.6.3.1 Графики to
+
+# In[34]:
 
 
 def callback_to(attrname, old, new):
@@ -1020,14 +1194,10 @@ source_to.selected.on_change('indices', callback_to)
 source_from.selected.on_change('indices', callback_to)
 
 
-# In[107]:
+# ##### 3.6.3.2 Графики from
 
+# In[35]:
 
-def update_selection_from2(idx2):
-    source_to2.selected.update(indices=idx2) 
-
-def update_selection_to2(idx_to):
-    source_from2.selected.update(indices=idx_to)
 
 def callback_to2(attrname, old, new):
     
@@ -1086,23 +1256,104 @@ source_to2.selected.on_change('indices', callback_to2)
 button2.on_change('active', callback_to2)
 
 
-# In[108]:
+# In[ ]:
+
+
+
+
+
+# In[36]:
+
+
+def callback_links(attrname, old, new):
+    
+    map_links = figure(x_range=(3948598, 4354485), y_range=(7307581, 7725406), x_axis_type="mercator", y_axis_type="mercator")
+    map_links.add_tile(tile_provider)
+    
+    from_links = map_links.circle(x = 'X_from', y = 'Y_from', fill_color='papayawhip', fill_alpha = 0.6, 
+                    line_color='tan', line_alpha = 0.8, size=6 , source = source_links_from,
+                  nonselection_fill_alpha = 0.6, nonselection_fill_color = 'papayawhip', nonselection_line_color = None)
+
+    to_links = map_links.circle(x = 'X_to', y = 'Y_to', fill_color='grey', fill_alpha = 0.6, 
+                    line_color='black', line_alpha = 0.8, size=6 , source = source_links_to,
+                  nonselection_fill_alpha = 0.6, nonselection_fill_color = 'grey', nonselection_line_color = None)
+    
+    val = slider3.value
+    
+
+    arrw = Arrow()
+    
+
+    df = pd.DataFrame(data=ds_from_links.data)
+    df = df[:val].drop_duplicates()
+    
+    for i in range(len(df)):
+        
+        arrw
+        
+        '{} {}'.format(1, 2)
+    
+    for i in range(len(df)):
+        
+        arrw.x_start = df['X_from'][i]
+        arrw.y_start = df['Y_from'][i]
+        arrw.x_end = df['X_to'][i]
+        arrw.y_end = df['Y_to'][i]
+    
+        print(arrw.x_start)
+    
+        map_links.add_layout(arrw)
+    
+    layout7.children[0] = map_links
+    
+#     new_data1 = dict()
+#     new_data1['x_start'] = list(df['X_from'])
+#     new_data1['y_start'] = list(df['Y_from'])
+#     new_data1['x_end'] = list(df['X_to'])
+#     new_data1['y_end'] = list(df['Y_to'])
+#     new_data1['line_color']=['blue']*len(df)
+    
+#     ds_from_links_draw.data = new_data1
+    
+    print(len(df))
+
+
+# In[ ]:
+
+
+
+
+
+# In[37]:
+
+
+slider3.on_change('value', callback_links)
+
+
+# In[38]:
 
 
 # slider1.on_change('value', callback)
 # slider2.on_change('value', callback2)
 
 
-# In[109]:
+# ### 3.7 Layouts
+
+# In[39]:
 
 
 layout1 = layout.row(p,p_to)
 layout2 = layout.row(p2, p_from)
-layout3 = layout.column(select1, text_okrug, checkbox_group1, text_func, button1, slider1, stats)
-layout4 = layout.column(select2, text_okrug, checkbox_group2, text_func, button2, slider2, stats2)
+layout3 = layout.column(select1, text_okrug, checkbox_group1, text_func, button1, stats)
+layout4 = layout.column(select2, text_okrug, checkbox_group2, text_func, button2, stats2)
 
 layout5 = layout.row(layout1, layout3)
 layout6 = layout.row(layout2, layout4)
+
+layout7 = layout.row(map_links)
+layout8 = layout.column(select3, text_okrug, checkbox_group3, text_func, slider3)
+
+layout9 = layout.row(layout7, layout8)
 
 # box = layout.column(layout5, layout6)
 
@@ -1110,32 +1361,33 @@ layout6 = layout.row(layout2, layout4)
 # curdoc().add_root(box)
 
 
-# In[114]:
+# In[40]:
 
 
-from bokeh.themes import Theme
-theme = Theme(json={
-    'attrs': {
-        'RadioButtonGroup': 
-            {
-            'default_size': 100}
-        }
-    })
+# from bokeh.themes import Theme
+# theme = Theme(json={
+#     'attrs': {
+#         'RadioButtonGroup': 
+#             {
+#             'default_size': 100}
+#         }
+#     })
 
 
-# In[115]:
+# In[41]:
 
 
 tab1 = Panel(child=layout5,title='Фильтр корреспонденций "ИЗ"')
 tab2 = Panel(child=layout6,title='Фильтр корреспонденций "В"')
-tabs = Tabs(tabs=[tab1, tab2])
+tab3 = Panel(child=layout9,title='Топ связи')
+tabs = Tabs(tabs=[tab1, tab2, tab3])
 
 doc = curdoc() #.add_root(tabs)
-doc.theme = theme
+#doc.theme = theme
 doc.add_root(tabs)
 
 
-# In[111]:
+# In[42]:
 
 
 # apps = {'/': Application(FunctionHandler(make_document))}
@@ -1148,18 +1400,6 @@ doc.add_root(tabs)
 #     print('Opening Bokeh application on http://localhost:5006/')
 
 # server.io_loop.add_callback(server.show, "/")
-
-
-# In[ ]:
-
-
-
-
-
-# In[ ]:
-
-
-
 
 
 # In[ ]:
